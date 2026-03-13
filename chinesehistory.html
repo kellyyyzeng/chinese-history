@@ -75,21 +75,20 @@
     <div id="app" class="w-full max-w-2xl relative z-10">
         
         <div v-if="!isFinished" class="fixed top-6 left-6 z-50">
-            <div class="bg-white/95 backdrop-blur shadow-2xl rounded-2xl border-l-[12px] border-red-700 p-6 min-w-[200px]">
-                <p class="text-xs text-red-900/60 font-bold uppercase tracking-widest chinese-font mb-1">歷史名冊進度</p>
+            <div class="bg-white/95 backdrop-blur shadow-2xl rounded-2xl border-l-[12px] border-red-700 p-5 md:p-6 min-w-[160px] md:min-w-[200px]">
+                <p class="text-xs text-red-900/60 font-bold uppercase tracking-widest chinese-font mb-1">分數</p>
                 <div class="flex items-baseline gap-2">
-                    <span class="text-5xl font-black text-red-700 font-mono">{{ correctCount }}</span>
-                    <span class="text-2xl text-gray-300 font-light">/</span>
-                    <span class="text-3xl font-bold text-gray-700 font-mono">{{ questions.length }}</span>
-                    <span class="text-sm text-gray-400 font-bold ml-1 chinese-font">題</span>
+                    <span class="text-4xl md:text-5xl font-black text-red-700 font-mono">{{ correctCount }}</span>
+                    <span class="text-xl md:text-2xl text-gray-300 font-light">/</span>
+                    <span class="text-2xl md:text-3xl font-bold text-gray-700 font-mono">{{ questions.length }}</span>
                 </div>
             </div>
         </div>
 
         <div v-if="!isFinished" class="fixed top-6 right-6 z-50 flex flex-col items-end">
             <transition name="fade">
-                <div v-if="combo > 1" class="combo-pop bg-orange-600 text-white px-6 py-3 rounded-full shadow-2xl border-2 border-yellow-200">
-                    <p class="text-3xl font-black italic leading-none chinese-font">x{{ combo }} 連擊</p>
+                <div v-if="combo > 1" class="combo-pop bg-orange-600 text-white px-5 py-2 md:px-6 md:py-3 rounded-full shadow-2xl border-2 border-yellow-200">
+                    <p class="text-2xl md:text-3xl font-black italic leading-none chinese-font">x{{ combo }} 連擊</p>
                 </div>
             </transition>
         </div>
@@ -100,8 +99,13 @@
                     <h1 class="text-4xl font-black text-red-950 chinese-font flex items-center gap-3 justify-center md:justify-start">
                         <span class="text-5xl opacity-80">🏮</span> 中國歷史文化問答
                     </h1>
-                    <div class="w-full h-2.5 bg-red-950/10 rounded-full mt-5 overflow-hidden shadow-inner">
-                        <div class="progress-bar h-full transition-all duration-700 rounded-full" :style="{ width: progress + '%' }"></div>
+                    <div class="mt-6 relative">
+                        <div class="flex justify-end mb-1">
+                            <span class="text-[11px] font-bold text-gray-400 font-mono tracking-widest">{{ currentIndex + 1 }} / {{ questions.length }}</span>
+                        </div>
+                        <div class="w-full h-2.5 bg-red-950/10 rounded-full overflow-hidden shadow-inner">
+                            <div class="progress-bar h-full transition-all duration-700 rounded-full" :style="{ width: progress + '%' }"></div>
+                        </div>
                     </div>
                 </div>
 
@@ -131,29 +135,34 @@
                     <p class="font-black text-orange-950 text-xl mb-3 chinese-font flex items-center gap-2">💡 <span class="border-b-2 border-orange-200">歷史錦囊</span></p>
                     <p class="text-gray-800 leading-relaxed text-lg mb-8">{{ currentQuestion.explanation }}</p>
                     <button @click="nextQuestion" class="w-full bg-red-700 text-white py-6 rounded-2xl text-2xl font-black shadow-[0_8px_0_0_#991b1b] active:shadow-none active:translate-y-2 transition-all">
-                        {{ isLastQuestion ? '查看文化成就' : '下一關 (Enter)' }}
+                        {{ isLastQuestion ? '查看科舉放榜' : '下一關 (Enter)' }}
                     </button>
                 </div>
             </div>
 
-            <div v-else key="result" class="text-center bg-white rounded-[3rem] shadow-2xl p-14 quiz-card border-b-0 border-t-[16px]">
-                <div class="text-9xl mb-8 drop-shadow-lg">{{ badge.icon }}</div>
-                <h2 class="text-6xl font-black text-red-900 mb-3 chinese-font">{{ badge.title }}</h2>
-                <p class="text-2xl text-gray-600 mb-12 italic">「{{ badge.desc }}」</p>
+            <div v-else key="result" class="text-center bg-white rounded-[3rem] shadow-2xl p-8 md:p-14 quiz-card border-b-0 border-t-[16px]">
+                <div class="text-8xl md:text-9xl mb-6 drop-shadow-lg">{{ badge.icon }}</div>
+                <h2 class="text-5xl md:text-6xl font-black text-red-900 mb-3 chinese-font">{{ badge.title }}</h2>
+                <p class="text-xl md:text-2xl text-gray-600 mb-10 italic">「{{ badge.desc }}」</p>
 
-                <div class="grid grid-cols-2 gap-6 mb-12">
-                    <div class="bg-red-50 p-8 rounded-3xl border border-red-100">
-                        <p class="text-sm text-red-400 font-bold uppercase chinese-font">名冊答對數</p>
-                        <p class="text-6xl font-black text-red-700 font-mono">{{ correctCount }} / {{ questions.length }}</p>
+                <div class="grid grid-cols-2 gap-4 md:gap-6 mb-12">
+                    <div class="bg-red-50 p-6 md:p-8 rounded-3xl border border-red-100 flex flex-col items-center justify-center">
+                        <p class="text-xs md:text-sm text-red-400 font-bold uppercase chinese-font mb-2">最終分數</p>
+                        <div class="flex items-baseline gap-1 whitespace-nowrap">
+                            <span class="text-5xl md:text-6xl font-black text-red-700 font-mono">{{ correctCount }}</span>
+                            <span class="text-2xl md:text-3xl text-red-700/40 font-mono font-light">/{{ questions.length }}</span>
+                        </div>
                     </div>
-                    <div class="bg-orange-50 p-8 rounded-3xl border border-orange-100">
-                        <p class="text-sm text-orange-400 font-bold uppercase chinese-font">巔峰連擊</p>
-                        <p class="text-6xl font-black text-orange-600 font-mono">{{ maxCombo }}</p>
+                    <div class="bg-orange-50 p-6 md:p-8 rounded-3xl border border-orange-100 flex flex-col items-center justify-center">
+                        <p class="text-xs md:text-sm text-orange-400 font-bold uppercase chinese-font mb-2">巔峰連擊</p>
+                        <div class="flex items-baseline whitespace-nowrap">
+                            <span class="text-5xl md:text-6xl font-black text-orange-600 font-mono">{{ maxCombo }}</span>
+                        </div>
                     </div>
                 </div>
 
-                <button @click="restart" class="w-full bg-red-700 text-white py-6 rounded-3xl text-3xl font-black shadow-2xl hover:bg-red-800 transition-all active:scale-95">
-                    重新登基挑戰
+                <button @click="restart" class="w-full bg-red-700 text-white py-5 md:py-6 rounded-3xl text-2xl md:text-3xl font-black shadow-2xl hover:bg-red-800 transition-all active:scale-95">
+                    再次進京趕考
                 </button>
             </div>
         </transition>
@@ -162,7 +171,6 @@
     <script>
         const { createApp, ref, computed, onMounted } = Vue;
 
-        // 洗牌演算法 (Fisher-Yates Shuffle)
         function shuffleArray(array) {
             const arr = [...array];
             for (let i = arr.length - 1; i > 0; i--) {
@@ -174,7 +182,6 @@
 
         createApp({
             setup() {
-                // 注意：現在的 answer 屬性儲存的是「正確選項的文字」，而非 A/B/C/D
                 const allQuestions = [
     { question: "孔子是哪一家思想的創始人？", options: ["道家", "儒家", "墨家", "法家"], answer: "儒家", explanation: "孔子創立儒家，教導仁愛和禮儀。" },
     { question: "《論語》記錄的是誰的言行？", options: ["老子", "孔子", "孟子", "韓非"], answer: "孔子", explanation: "這是孔子的學生及其再傳弟子記錄孔子言論的經典。" },
@@ -258,21 +265,13 @@
     { question: "林則徐虎門銷煙發生在哪一年？", options: ["1839年", "1840年", "1842年", "1856年"], answer: "1839年", explanation: "虎門銷煙引發鴉片戰爭。" }
                 ];
 
-                // 遊戲啟動設定：隨機選取 30 題，並把每題的選項也洗牌
                 const initializeQuiz = () => {
-                    // 1. 打亂所有題目，並取出前 30 題
                     let selected = shuffleArray(allQuestions).slice(0, 30);
-                    
-                    // 2. 將取出的題目，裡面的選項再次打亂
                     return selected.map(q => {
-                        return {
-                            ...q,
-                            options: shuffleArray(q.options)
-                        };
+                        return { ...q, options: shuffleArray(q.options) };
                     });
                 };
 
-                // Vue 反應式資料
                 const questions = ref(initializeQuiz());
                 const currentIndex = ref(0);
                 const correctCount = ref(0);
@@ -282,19 +281,23 @@
                 const selectedAnswer = ref(null);
                 const isFinished = ref(false);
 
-                // 計算屬性
                 const currentQuestion = computed(() => questions.value[currentIndex.value]);
+                // 進度條現在會根據題數平滑前進
                 const progress = computed(() => (currentIndex.value / questions.value.length) * 100);
                 const isLastQuestion = computed(() => currentIndex.value === questions.value.length - 1);
 
+                // 更新為科舉等級稱謂
                 const badge = computed(() => {
                     const rate = correctCount.value / questions.value.length;
-                    if (rate === 1) return { icon: '🐲', title: '千古一帝', desc: '博古通今，震古爍今！' };
-                    if (rate >= 0.8) return { icon: '🎓', title: '內閣大學士', desc: '才高八斗，朝廷重臣。' };
-                    return { icon: '🖋️', title: '寒窗學子', desc: '書山有路勤為徑。' };
+                    if (rate === 1) return { icon: '🐉', title: '狀元', desc: '才高八斗，殿試第一，無人能出其右！' };
+                    if (rate >= 0.9) return { icon: '🌸', title: '榜眼', desc: '學富五車，才華橫溢，金榜題名。' };
+                    if (rate >= 0.8) return { icon: '🌺', title: '探花', desc: '文采斐然，御筆欽點，春風得意。' };
+                    if (rate >= 0.6) return { icon: '📜', title: '進士', desc: '十年寒窗無人問，一舉成名天下知。' };
+                    if (rate >= 0.4) return { icon: '🏮', title: '舉人', desc: '秋闈及第，已具備入仕做官的資格。' };
+                    if (rate >= 0.2) return { icon: '🖋️', title: '秀才', desc: '初入縣學，尚需懸梁刺股，繼續努力。' };
+                    return { icon: '🌱', title: '童生', desc: '初具慧根，讀書破萬卷方能如神。' };
                 });
 
-                // 音效函數
                 const playSfx = (type) => {
                     const soundUrls = {
                         correct: 'https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3',
@@ -306,13 +309,11 @@
                     audio.play().catch(() => {});
                 };
 
-                // 檢查答案 (傳入的是選項的文字，而不是 A,B,C,D)
                 const checkAnswer = (selectedText) => {
                     if (showFeedback.value) return;
                     selectedAnswer.value = selectedText;
                     showFeedback.value = true;
                     
-                    // 比對選中的文字與正確答案文字
                     if (selectedText === currentQuestion.value.answer) {
                         correctCount.value++;
                         combo.value++;
@@ -324,15 +325,15 @@
                 };
 
                 const nextQuestion = () => {
-                    if (isLastQuestion.value) isFinished.value = true;
-                    else {
+                    if (isLastQuestion.value) {
+                        isFinished.value = true;
+                    } else {
                         currentIndex.value++;
                         showFeedback.value = false;
                         selectedAnswer.value = null;
                     }
                 };
 
-                // 動態取得選項樣式 (使用文字比對)
                 const getOptionStyle = (optText) => {
                     if (!showFeedback.value) return;
                     if (optText === currentQuestion.value.answer) return 'bg-green-50 border-green-500 text-green-700 ring-4 ring-green-100 scale-105';
@@ -340,24 +341,16 @@
                     return 'opacity-20 scale-95';
                 };
 
-                // 產生 A, B, C, D 標籤
                 const getLetter = (idx) => ['A', 'B', 'C', 'D'][idx];
-                
-                // 重新開始
                 const restart = () => location.reload();
 
-                // 綁定鍵盤快捷鍵
                 onMounted(() => {
                     window.addEventListener('keydown', (e) => {
                         const key = e.key.toUpperCase();
                         const idx = ['A','B','C','D'].indexOf(key);
-                        
-                        // 如果按下 A,B,C,D，根據 index 找出對應的選項文字送出
-                        if (idx !== -1 && !showFeedback.value) {
+                        if (idx !== -1 && !showFeedback.value && currentQuestion.value.options[idx]) {
                             checkAnswer(currentQuestion.value.options[idx]);
                         }
-                        
-                        // 按下 Enter 下一題
                         if (e.key === 'Enter' && showFeedback.value) nextQuestion();
                     });
                 });
