@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏛️ 西方歷史文化問答</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@900&family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* 改為皇家藍與暗金的西方古典色調 */
+        :root { --primary-blue: #1E3A8A; --gold-dark: #B45309; --bg-paper: #F8FAFC; }
+        body { font-family: 'Noto Sans TC', sans-serif; background-color: var(--bg-paper); overflow-x: hidden; position: relative; }
+
+        .bg-pattern-overlay {
+            position: fixed; inset: 0;
+            background-image: url('https://www.transparenttextures.com/patterns/60-lines.png');
+            opacity: 0.2; z-index: -3;
+        }
+
+        .bg-culture-visuals {
+            position: fixed; inset: 0; z-index: -2; pointer-events: none;
+            /* 替換為較抽象/古典的背景 */
+            background-image: 
+                url('https://cdn.pixabay.com/photo/2016/11/22/19/25/clouds-1850120_1280.jpg');
+            background-position: center;
+            background-repeat: no-repeat;
+            background-size: cover;
+            opacity: 0.05;
+            filter: grayscale(100%) contrast(120%);
+        }
+
+        .bg-deco-light {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0) 100%);
+            transform: skewX(-20deg) translateX(-100%);
+            animation: light-drift 15s linear infinite;
+            z-index: -1; pointer-events: none;
+        }
+
+        @keyframes light-drift { from { transform: skewX(-20deg) translateX(-100%); } to { transform: skewX(-20deg) translateX(200%); } }
+
+        .classic-font { font-family: 'Noto Serif TC', serif; }
+        .quiz-card { 
+            border-top: 14px solid var(--primary-blue); 
+            border-bottom: 4px solid #E5E7EB;
+            box-shadow: 0 25px 50px -12px rgba(30, 58, 138, 0.1); 
+            border-radius: 2rem;
+            position: relative;
+        }
+        .option-btn {
+            background: #FFFFFF; border: 2px solid #E5E7EB; color: #374151;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .option-btn:not(:disabled):hover {
+            border-color: var(--primary-blue); background-color: #EFF6FF; transform: translateY(-3px);
+            box-shadow: 0 10px 15px -3px rgba(30, 58, 138, 0.1);
+        }
+
+        /* 進度條改為藍色到金色的漸層 */
+        .progress-bar { background: linear-gradient(90deg, #1E3A8A 0%, #D97706 100%); }
+
+        .combo-pop { animation: combo-bounce 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes combo-bounce { 0% { transform: scale(0); opacity: 0; } 50% { transform: scale(1.3) rotate(-5deg); } 100% { transform: scale(1) rotate(0); opacity: 1; } }
+        
+        .shake-animation { animation: shake 0.4s ease-in-out; }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <div class="bg-pattern-overlay"></div>
+    <div class="bg-culture-visuals"></div>
+    <div class="bg-deco-light"></div>
+
+    <div id="app" class="w-full max-w-2xl relative z-10">
+        
+        <div v-if="!isFinished" class="fixed top-6 left-6 z-50">
+            <div class="bg-white/95 backdrop-blur shadow-2xl rounded-2xl border-l-[12px] border-blue-800 p-5 md:p-6 min-w-[160px] md:min-w-[200px]">
+                <p class="text-xs text-blue-900/60 font-bold uppercase tracking-widest classic-font mb-1">榮譽積分</p>
+                <div class="flex items-baseline gap-2">
+                    <span class="text-4xl md:text-5xl font-black text-blue-800 font-mono">{{ correctCount }}</span>
+                    <span class="text-xl md:text-2xl text-gray-300 font-light">/</span>
+                    <span class="text-2xl md:text-3xl font-bold text-gray-700 font-mono">{{ questions.length }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div v-if="!isFinished" class="fixed top-6 right-6 z-50 flex flex-col items-end">
+            <transition name="fade">
+                <div v-if="combo > 1" class="combo-pop bg-amber-600 text-white px-5 py-2 md:px-6 md:py-3 rounded-full shadow-2xl border-2 border-yellow-300">
+                    <p class="text-2xl md:text-3xl font-black italic leading-none classic-font">x{{ combo }} 連擊</p>
+                </div>
+            </transition>
+        </div>
+
+        <transition name="fade" mode="out-in">
+            <div v-if="!isFinished" key="quiz">
+                <div class="mb-10 pt-28 md:pt-0 text-center md:text-left">
+                    <h1 class="text-4xl font-black text-blue-950 classic-font flex items-center gap-3 justify-center md:justify-start">
+                        <span class="text-5xl opacity-80">🏛️</span> 西方歷史文化問答
+                    </h1>
+                    <div class="mt-6 relative">
+                        <div class="flex justify-end mb-1">
+                            <span class="text-[11px] font-bold text-gray-400 font-mono tracking-widest">{{ currentIndex + 1 }} / {{ questions.length }}</span>
+                        </div>
+                        <div class="w-full h-2.5 bg-blue-950/10 rounded-full overflow-hidden shadow-inner">
+                            <div class="progress-bar h-full transition-all duration-700 rounded-full" :style="{ width: progress + '%' }"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div :class="['bg-white quiz-card p-9 md:p-14 mb-8']">
+                    <h2 class="text-2xl md:text-3xl font-bold text-gray-900 leading-snug relative z-10">
+                        {{ currentQuestion.question }}
+                    </h2>
+                </div>
+
+                <div class="grid gap-4 mb-8">
+                    <button 
+                        v-for="(opt, idx) in currentQuestion.options" 
+                        :key="idx"
+                        @click="checkAnswer(opt)"
+                        :disabled="showFeedback"
+                        :class="[
+                            'w-full p-6 text-left text-xl rounded-2xl flex justify-between items-center font-bold option-btn shadow',
+                            getOptionStyle(opt)
+                        ]"
+                    >
+                        <span><span class="mr-5 text-gray-400 font-mono text-sm">{{ getLetter(idx) }}</span> {{ opt }}</span>
+                        <span v-if="showFeedback && opt === currentQuestion.answer" class="text-2xl">🏛️</span>
+                    </button>
+                </div>
+
+                <div v-if="showFeedback" class="mt-8 p-8 bg-white/95 border-2 border-amber-500 rounded-3xl shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-400">
+                    <p class="font-black text-amber-900 text-xl mb-3 classic-font flex items-center gap-2">📜 <span class="border-b-2 border-amber-200">歷史卷軸</span></p>
+                    <p class="text-gray-800 leading-relaxed text-lg mb-8">{{ currentQuestion.explanation }}</p>
+                    <button @click="nextQuestion" class="w-full bg-blue-800 text-white py-6 rounded-2xl text-2xl font-black shadow-[0_8px_0_0_#1e3a8a] active:shadow-none active:translate-y-2 transition-all">
+                        {{ isLastQuestion ? '參加加冕儀式' : '下一頁 (Enter)' }}
+                    </button>
+                </div>
+            </div>
+
+            <div v-else key="result" class="text-center bg-white rounded-[3rem] shadow-2xl p-8 md:p-14 quiz-card border-b-0 border-t-[16px]">
+                <div class="text-8xl md:text-9xl mb-6 drop-shadow-lg">{{ badge.icon }}</div>
+                <h2 class="text-5xl md:text-6xl font-black text-blue-900 mb-3 classic-font">{{ badge.title }}</h2>
+                <p class="text-xl md:text-2xl text-gray-600 mb-10 italic">「{{ badge.desc }}」</p>
+
+                <div class="grid grid-cols-2 gap-4 md:gap-6 mb-12">
+                    <div class="bg-blue-50 p-6 md:p-8 rounded-3xl border border-blue-100 flex flex-col items-center justify-center">
+                        <p class="text-xs md:text-sm text-blue-500 font-bold uppercase classic-font mb-2">最終榮譽</p>
+                        <div class="flex items-baseline gap-1 whitespace-nowrap">
+                            <span class="text-5xl md:text-6xl font-black text-blue-800 font-mono">{{ correctCount }}</span>
+                            <span class="text-2xl md:text-3xl text-blue-800/40 font-mono font-light">/{{ questions.length }}</span>
+                        </div>
+                    </div>
+                    <div class="bg-amber-50 p-6 md:p-8 rounded-3xl border border-amber-100 flex flex-col items-center justify-center">
+                        <p class="text-xs md:text-sm text-amber-500 font-bold uppercase classic-font mb-2">巔峰連擊</p>
+                        <div class="flex items-baseline whitespace-nowrap">
+                            <span class="text-5xl md:text-6xl font-black text-amber-600 font-mono">{{ maxCombo }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <button @click="restart" class="w-full bg-blue-800 text-white py-5 md:py-6 rounded-3xl text-2xl md:text-3xl font-black shadow-2xl hover:bg-blue-900 transition-all active:scale-95">
+                    重返歷史長河
+                </button>
+            </div>
+        </transition>
+    </div>
+
+    <script>
+        const { createApp, ref, computed, onMounted } = Vue;
+
+        function shuffleArray(array) {
+            const arr = [...array];
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        createApp({
+            setup() {
+                // 替換為西方歷史文化題庫 (共30題)
+                const allQuestions = [
+{ question: "古希臘神話中，眾神之王是誰？", options: ["阿波羅", "波塞頓", "宙斯", "黑帝斯"], answer: "宙斯", explanation: "宙斯（Zeus）是古希臘神話中的統治者，掌管天空與雷電。" },
+{ question: "相傳特洛伊戰爭起因於爭奪哪位絕世美女？", options: ["雅典娜", "海倫", "維納斯", "克麗奧佩脫拉"], answer: "海倫", explanation: "斯巴達王后海倫被特洛伊王子帕里斯帶走，引發了長達十年的特洛伊戰爭。" },
+{ question: "雅典的帕德嫩神廟是為了祭祀哪位女神而建？", options: ["希拉", "阿提米絲", "阿芙蘿黛蒂", "雅典娜"], answer: "雅典娜", explanation: "帕德嫩神廟建於衛城，是古希臘守護神雅典娜的主神廟。" },
+{ question: "誰被後世尊稱為「醫學之父」，並留下了著名的醫師誓詞？", options: ["蘇格拉底", "亞里斯多德", "希波克拉底", "柏拉圖"], answer: "希波克拉底", explanation: "希波克拉底（Hippocrates）將醫學發展為專業，並提出醫師應遵守的道德規範。" },
+{ question: "古羅馬競技場（Colosseum）主要用於什麼活動？", options: ["戲劇表演", "角鬥士比賽", "元老院開會", "哲學辯論"], answer: "角鬥士比賽", explanation: "這座雄偉的圓形競技場主要用來舉辦角鬥士比賽、猛獸狩獵和模擬海戰。" },
+{ question: "「Veni, vidi, vici」（我來，我見，我征服）是哪位羅馬名將的名言？", options: ["奧古斯都", "尼祿", "凱撒大帝", "漢尼拔"], answer: "凱撒大帝", explanation: "尤利烏斯·凱撒在澤拉戰役獲勝後，寫下這句名言向羅馬元老院報捷。" },
+{ question: "西元476年，哪個歷史事件標誌著歐洲中世紀的開始？", options: ["十字軍東征", "西羅馬帝國滅亡", "文藝復興", "百年戰爭"], answer: "西羅馬帝國滅亡", explanation: "西元476年日耳曼領袖奧多亞塞廢黜羅馬皇帝，標誌著西羅馬帝國滅亡及古典時代的結束。" },
+{ question: "歐洲中世紀爆發的「黑死病」，主要是一種什麼傳染病？", options: ["天花", "霍亂", "鼠疫", "流感"], answer: "鼠疫", explanation: "14世紀席捲歐洲的黑死病是由鼠疫桿菌引起的，奪走歐洲約三分之一的人口。" },
+{ question: "「文藝復興」運動發源於歐洲哪個國家？", options: ["英國", "法國", "德國", "義大利"], answer: "義大利", explanation: "文藝復興發源於14世紀的義大利佛羅倫斯，隨後蔓延至全歐洲。" },
+{ question: "名畫《最後的晚餐》與《蒙娜麗莎》是哪位大師的作品？", options: ["米開朗基羅", "達文西", "拉斐爾", "梵谷"], answer: "達文西", explanation: "李奧納多·達文西是文藝復興時期的博學者，這兩幅畫是其最知名的代表作。" },
+{ question: "米開朗基羅在大衛像之外，還為哪座建築繪製了著名的穹頂畫？", options: ["巴黎聖母院", "西斯汀小堂", "米蘭大教堂", "聖保羅大教堂"], answer: "西斯汀小堂", explanation: "他在梵蒂岡西斯汀小堂天花板上繪製了《創世紀》等宏偉的壁畫。" },
+{ question: "哪位發明家的活字印刷術極大地推動了歐洲的思想傳播與宗教改革？", options: ["伽利略", "古騰堡", "牛頓", "哥白尼"], answer: "古騰堡", explanation: "約翰尼斯·古騰堡於1440年代發明了金屬活字印刷機，引發了歐洲的媒體革命。" },
+{ question: "1492年，哪位航海家在西班牙王室支持下「發現」了美洲新大陸？", options: ["麥哲倫", "達伽馬", "哥倫布", "庫克船長"], answer: "哥倫布", explanation: "克里斯多福·哥倫布為了尋找通往亞洲的航線，意外抵達了美洲巴哈馬群島。" },
+{ question: "人類歷史上第一次完成環球航行的船隊是由誰率領的？", options: ["麥哲倫", "迪亞士", "哥倫布", "鄭和"], answer: "麥哲倫", explanation: "斐迪南·麥哲倫的船隊於1519至1522年完成了首次環球航行，證明了地球是圓的。" },
+{ question: "發起16世紀宗教改革，將《九十五條論綱》釘在教堂大門上的是誰？", options: ["卡爾文", "亨利八世", "馬丁·路德", "教宗良十世"], answer: "馬丁·路德", explanation: "1517年，馬丁·路德反對贖罪券，發表了《九十五條論綱》，開啟了新教改革。" },
+{ question: "「日心說」（地球繞著太陽轉）最早是由哪位天文學家提出的？", options: ["托勒密", "伽利略", "哥白尼", "克卜勒"], answer: "哥白尼", explanation: "尼古拉·哥白尼在《天體運行論》中提出了日心說，挑戰了教會支持的地心說。" },
+{ question: "哪位英國劇作家寫下了《哈姆雷特》、《羅密歐與茱麗葉》等不朽名作？", options: ["狄更斯", "莎士比亞", "喬叟", "奧斯卡·王爾德"], answer: "莎士比亞", explanation: "威廉·莎士比亞是英國文學史上最偉大的作家，對後世戲劇影響深遠。" },
+{ question: "法國大革命爆發的標誌性事件是攻佔哪裡？", options: ["凡爾賽宮", "羅浮宮", "巴士底監獄", "榮軍院"], answer: "巴士底監獄", explanation: "1789年7月14日，巴黎民眾攻佔象徵封建王權的巴士底監獄，引爆了法國大革命。" },
+{ question: "哪位將軍在法國大革命後崛起，最終加冕為法蘭西皇帝？", options: ["路易十六", "拿破崙", "查理曼大帝", "羅伯斯庇爾"], answer: "拿破崙", explanation: "拿破崙·波拿巴憑藉卓越的軍事才能崛起，於1804年稱帝，橫掃歐洲大陸。" },
+{ question: "引發第一次工業革命的關鍵發明，改良蒸汽機的人是誰？", options: ["愛迪生", "瓦特", "法拉第", "特斯拉"], answer: "瓦特", explanation: "詹姆斯·瓦特改良了蒸汽機，為工廠、火車和輪船提供了強大的動力基礎。" },
+{ question: "美國獨立宣言起草於哪一年？", options: ["1776年", "1789年", "1492年", "1861年"], answer: "1776年", explanation: "1776年7月4日，北美十三州正式通過《獨立宣言》，宣告脫離英國統治。" },
+{ question: "打敗拿破崙的「滑鐵盧戰役」發生在哪個國家（現代邊界）？", options: ["法國", "英國", "比利時", "德國"], answer: "比利時", explanation: "1815年，拿破崙在位於今日比利時境內的滑鐵盧被反法同盟軍隊徹底擊敗。" },
+{ question: "第一次世界大戰的導火線是「塞拉耶佛事件」，被暗殺的是哪國的大公？", options: ["奧匈帝國", "俄羅斯帝國", "德意志帝國", "大英帝國"], answer: "奧匈帝國", explanation: "1914年奧匈帝國王儲斐迪南大公遇刺，導致一連串結盟國家互相宣戰。" },
+{ question: "二戰中，盟軍在法國北部發動的大規模登陸戰史稱什麼？", options: ["敦克爾克撤退", "諾曼第登陸", "中途島海戰", "柏林戰役"], answer: "諾曼第登陸", explanation: "1944年6月6日（D-Day），盟軍在諾曼第登陸，成功開闢了歐洲第二戰場。" },
+{ question: "冷戰時期，分隔東西柏林的標誌性建築是？", options: ["鐵幕", "馬奇諾防線", "柏林圍牆", "布蘭登堡門"], answer: "柏林圍牆", explanation: "柏林圍牆建於1961年，是冷戰的象徵，直到1989年才被推倒。" },
+{ question: "啟蒙運動中，提出「三權分立」學說的法國思想家是？", options: ["伏爾泰", "盧梭", "孟德斯鳩", "狄德羅"], answer: "孟德斯鳩", explanation: "孟德斯鳩在《論法的精神》中提出行政、立法、司法三權分立，影響了多國憲法。" },
+{ question: "《大憲章》（Magna Carta）是歐洲哪個國家限制王權的歷史性文件？", options: ["法國", "英國", "西班牙", "葡萄牙"], answer: "英國", explanation: "1215年英國國王約翰被迫簽署《大憲章》，確立了「王在法下」的原則。" },
+{ question: "「日不落帝國」通常是用來形容哪個全盛時期的帝國？", options: ["羅馬帝國", "西班牙帝國", "大英帝國", "法蘭西帝國"], answer: "大英帝國", explanation: "大英帝國極盛時期殖民地遍佈全球，太陽總會照在其領土上，故稱日不落。" },
+{ question: "結束了歐洲三十年戰爭，奠定現代主權國家體系體制的條約是？", options: ["凡爾賽條約", "西發里亞和約", "維也納會議", "烏得勒支和約"], answer: "西發里亞和約", explanation: "1648年簽訂的西發里亞和約（Peace of Westphalia）標誌著現代國際關係的開端。" },
+{ question: "古代世界七大奇蹟中，唯一現存的建築是？", options: ["巴比倫空中花園", "亞歷山大燈塔", "羅德島巨像", "吉薩大金字塔"], answer: "吉薩大金字塔", explanation: "埃及吉薩大金字塔是七大奇蹟中最古老，也是唯一保存至今的建築。" },
+{ question: "古希臘哲學家蘇格拉底最著名的教學方法是？", options: ["演繹推理", "歸納法", "產婆術", "形而上學"], answer: "產婆術", explanation: "蘇格拉底使用「產婆術」（maieutics）引導學生自行發現真理，而非直接傳授知識。" },
+{ question: "柏拉圖的著名哲學著作《理想國》主張由誰統治國家？", options: ["武士", "商人", "哲學王", "農民"], answer: "哲學王", explanation: "柏拉圖認為只有哲學家才能洞察真理，應成為理想國家的統治者。" },
+{ question: "亞里斯多德是哪位古希臘哲學家的學生？", options: ["蘇格拉底", "柏拉圖", "畢達哥拉斯", "赫拉克利特"], answer: "柏拉圖", explanation: "亞里斯多德在雅典的學院（Academy）師從柏拉圖長達20年，後自創逍遙學派。" },
+{ question: "古希臘城邦中，實行軍國主義教育的國家是？", options: ["雅典", "斯巴達", "科林斯", "底比斯"], answer: "斯巴達", explanation: "斯巴達從7歲起實施嚴苛軍事訓練，強調紀律與戰鬥力。" },
+{ question: "馬拉松戰役中，雅典軍隊擊敗了哪個帝國的入侵？", options: ["羅馬帝國", "波斯帝國", "馬其頓帝國", "埃及帝國"], answer: "波斯帝國", explanation: "公元前490年，雅典在馬拉松平原擊敗波斯大軍，催生了「馬拉松長跑」傳說。" },
+{ question: "亞歷山大大帝的帝國首都設在哪裡？", options: ["雅典", "巴比倫", "亞歷山卓", "羅馬"], answer: "亞歷山卓", explanation: "亞歷山大在埃及建立亞歷山卓城，成為希臘化時代的文化中心。" },
+{ question: "羅馬共和國晚期，最著名的「三頭同盟」成員包括凱撒、龐培與誰？", options: ["屋大維", "克拉蘇", "安東尼", "布魯圖斯"], answer: "克拉蘇", explanation: "前三頭同盟（60 BC）由凱撒、龐培、克拉蘇組成，後因內戰瓦解。" },
+{ question: "羅馬帝國第一位皇帝是誰？", options: ["凱撒", "奧古斯都", "尼祿", "圖拉真"], answer: "奧古斯都", explanation: "屋大維於公元前27年獲元老院尊號「奧古斯都」，開創羅馬帝國時代。" },
+{ question: "羅馬帝國分裂為東西兩部分是在哪位皇帝統治時期？", options: ["君士坦丁大帝", "狄奧多西一世", "哈德良", "馬可·奧里略"], answer: "狄奧多西一世", explanation: "395年狄奧多西一世去世後，帝國正式永久分裂為東羅馬與西羅馬。" },
+{ question: "羅馬帝國的基督教合法化是由哪位皇帝頒布《米蘭詔令》？", options: ["尼祿", "君士坦丁大帝", "圖拉真", "戴克里先"], answer: "君士坦丁大帝", explanation: "313年君士坦丁大帝頒布《米蘭詔令》，結束對基督徒的迫害。" },
+{ question: "中世紀歐洲最著名的騎士文學作品是？", options: ["伊里亞德", "亞瑟王傳奇", "神曲", "堂吉訶德"], answer: "亞瑟王傳奇", explanation: "亞瑟王與圓桌騎士的故事象徵中世紀騎士精神與基督教理想。" },
+{ question: "中世紀歐洲封建制度的基礎是「封君封臣」關係，核心文件是？", options: ["大憲章", "采邑制契約", "教皇詔書", "十誡"], answer: "采邑制契約", explanation: "領主將土地封給封臣，封臣提供軍事服務，形成封建階層。" },
+{ question: "第一次十字軍東征的主要目標是收復哪座聖城？", options: ["君士坦丁堡", "耶路撒冷", "羅馬", "麥加"], answer: "耶路撒冷", explanation: "1099年十字軍攻克耶路撒冷，建立耶路撒冷王國。" },
+{ question: "中世紀歐洲最著名的修道院制度是由哪位聖人創立？", options: ["聖奧古斯丁", "聖本篤", "聖方濟", "聖多明我"], answer: "聖本篤", explanation: "聖本篤於529年創立蒙特卡西諾修道院，制定《聖本篤會規》。" },
+{ question: "百年戰爭（1337-1453）主要交戰雙方是？", options: ["法國與西班牙", "英國與法國", "神聖羅馬帝國與義大利", "奧斯曼與拜占庭"], answer: "英國與法國", explanation: "百年戰爭因英國王室對法國王位的繼承權而起，最終法國獲勝。" },
+{ question: "聖女貞德在百年戰爭中領導法軍解圍哪座城市？", options: ["巴黎", "奧爾良", "里昂", "波爾多"], answer: "奧爾良", explanation: "1429年聖女貞德率軍解奧爾良之圍，扭轉戰局，被尊為法國民族英雄。" },
+{ question: "文藝復興時期，義大利佛羅倫斯的統治家族是？", options: ["美第奇家族", "波吉亞家族", "斯福爾扎家族", "貢扎加家族"], answer: "美第奇家族", explanation: "美第奇家族資助藝術家與人文主義者，成為文藝復興的贊助核心。" },
+{ question: "拉斐爾的代表作《雅典學院》描繪了哪兩位哲學家在中央？", options: ["蘇格拉底與柏拉圖", "柏拉圖與亞里斯多德", "達文西與米開朗基羅", "哥白尼與伽利略"], answer: "柏拉圖與亞里斯多德", explanation: "壁畫中央柏拉圖指天（理念論）、亞里斯多德指地（經驗論）。" },
+{ question: "宗教改革後，英國國教（安立甘宗）的創立者是？", options: ["馬丁·路德", "亨利八世", "約翰·諾克斯", "約翰·加爾文"], answer: "亨利八世", explanation: "1534年亨利八世因婚姻問題與教廷決裂，通過《至尊法案》成為英國教會最高領袖。" },
+{ question: "加爾文教派的主要中心是哪座城市？", options: ["維滕貝格", "日內瓦", "倫敦", "羅馬"], answer: "日內瓦", explanation: "加爾文在日內瓦建立神權政體，推行嚴格的清教徒紀律。" },
+{ question: "哥白尼的《天體運行論》於哪年出版？", options: ["1492年", "1543年", "1609年", "1687年"], answer: "1543年", explanation: "該書出版於哥白尼去世前夕，正式提出日心說。" },
+{ question: "伽利略因支持日心說而被宗教裁判所審判的地點是？", options: ["羅馬", "佛羅倫斯", "威尼斯", "米蘭"], answer: "羅馬", explanation: "1633年伽利略在羅馬被迫公開放棄日心說，遭軟禁終生。" },
+{ question: "牛頓最著名的著作《自然哲學的數學原理》出版於？", options: ["1666年", "1687年", "1704年", "1727年"], answer: "1687年", explanation: "該書奠定古典力學基礎，提出萬有引力定律。" },
+{ question: "啟蒙運動的核心理念「理性」最早由哪位英國哲學家系統提出？", options: ["伏爾泰", "洛克", "盧梭", "孟德斯鳩"], answer: "洛克", explanation: "約翰·洛克的《政府論》主張天賦人權與社會契約論，影響美國獨立宣言。" },
+{ question: "法國啟蒙思想家伏爾泰最著名的口號是？", options: ["自由、平等、博愛", "我不同意你的觀點，但我誓死捍衛你說話的權利", "知識就是力量", "人是生而自由的"], answer: "我不同意你的觀點，但我誓死捍衛你說話的權利", explanation: "這句話體現伏爾泰對言論自由的堅定捍衛。" },
+{ question: "美國獨立戰爭中，發表《常識》小冊子鼓動獨立的是誰？", options: ["喬治·華盛頓", "湯瑪斯·潘恩", "班傑明·富蘭克林", "湯瑪斯·傑佛遜"], answer: "湯瑪斯·潘恩", explanation: "1776年潘恩的《常識》銷售數十萬冊，強烈呼籲脫離英國。" },
+{ question: "法國大革命期間，推行「恐怖統治」的是？", options: ["拿破崙", "羅伯斯庇爾", "馬拉", "丹東"], answer: "羅伯斯庇爾", explanation: "1793-1794年雅各賓派羅伯斯庇爾主政，處決數萬人以保衛革命。" },
+{ question: "維也納會議（1814-1815）的主要目的是？", options: ["懲罰法國", "恢復歐洲舊秩序", "建立聯合國", "瓜分非洲"], answer: "恢復歐洲舊秩序", explanation: "會議由梅特涅主導，試圖重建拿破崙戰敗後的歐洲均勢。" },
+{ question: "工業革命期間，英國第一條商業鐵路是？", options: ["曼徹斯特至利物浦", "倫敦至伯明翰", "利茲至曼徹斯特", "格拉斯哥至愛丁堡"], answer: "曼徹斯特至利物浦", explanation: "1825年史蒂芬森的「旅行者號」開通這條鐵路，標誌鐵路時代開始。" },
+{ question: "馬克思與恩格斯合著的《共產黨宣言》出版於？", options: ["1848年", "1867年", "1917年", "1936年"], answer: "1848年", explanation: "該宣言提出「全世界無產者聯合起來」，影響後世社會主義運動。" },
+{ question: "義大利統一運動（Risorgimento）的領導者是？", options: ["加里波底", "加富爾", "馬志尼", "維克多·艾曼紐二世"], answer: "加里波底", explanation: "加里波底率領「紅衫軍」南征，與加富爾、馬志尼共同完成義大利統一（1861年）。" },
+{ question: "普法戰爭（1870-1871）後，哪個國家統一？", options: ["義大利", "德意志", "奧匈帝國", "西班牙"], answer: "德意志", explanation: "普魯士首相俾斯麥利用戰爭勝利，1871年在凡爾賽宮宣布德意志帝國成立。" },
+{ question: "第一次世界大戰中，英國參戰的直接原因是？", options: ["德國入侵比利時", "奧匈帝國宣戰", "俄國崩潰", "美國參戰"], answer: "德國入侵比利時", explanation: "1914年德國違反比利時中立，英國依1907年條約參戰。" },
+{ question: "一戰中，協約國與同盟國的主要對立陣營是？", options: ["英法俄 vs 德奧土", "美日 vs 義大利", "中國 vs 土耳其", "西班牙 vs 葡萄牙"], answer: "英法俄 vs 德奧土", explanation: "同盟國為德意志、奧匈、土耳其；協約國為英國、法國、俄國（後加入美國）。" },
+{ question: "凡爾賽條約（1919）最嚴苛的條款針對哪國？", options: ["奧匈帝國", "德國", "俄國", "土耳其"], answer: "德國", explanation: "條約迫使德國割地、賠款、限制軍備，埋下二戰種子。" },
+{ question: "二戰爆發的標誌是德國入侵哪國？", options: ["法國", "波蘭", "蘇聯", "英國"], answer: "波蘭", explanation: "1939年9月1日德軍入侵波蘭，英法隨即宣戰。" },
+{ question: "二戰中，太平洋戰場的轉折點是？", options: ["珍珠港事件", "中途島海戰", "硫磺島戰役", "沖繩戰役"], answer: "中途島海戰", explanation: "1942年美軍在中途島擊敗日本艦隊，取得太平洋主動權。" },
+{ question: "二戰期間，盟軍領導人「三巨頭」包括羅斯福、邱吉爾與？", options: ["希特勒", "史達林", "墨索里尼", "東條英機"], answer: "史達林", explanation: "1943-1945年德黑蘭、雅爾達會議中，三巨頭決定戰後世界格局。" },
+{ question: "1945年德國無條件投降的簽署地點是？", options: ["柏林", "巴黎", "倫敦", "華盛頓"], answer: "柏林", explanation: "1945年5月8日（歐洲勝利日）在柏林近郊簽署投降書。" },
+{ question: "美國在二戰末期對日本投擲原子彈的城市是？", options: ["東京", "廣島與長崎", "大阪", "京都"], answer: "廣島與長崎", explanation: "1945年8月6日與9日，美軍投下「小男孩」與「胖子」，加速日本投降。" },
+{ question: "冷戰開始的標誌性演說是邱吉爾的？", options: ["鐵幕演說", "四點計劃", "十四點和平原則", "告別演說"], answer: "鐵幕演說", explanation: "1946年邱吉爾在美國富爾頓發表「鐵幕」演說，宣告冷戰序幕。" },
+{ question: "北大西洋公約組織（NATO）成立於哪一年？", options: ["1945年", "1949年", "1955年", "1961年"], answer: "1949年", explanation: "1949年美國與西歐12國簽署《北大西洋公約》，對抗華沙公約組織。" },
+{ question: "華沙公約組織是蘇聯為對抗哪個組織而成立？", options: ["聯合國", "NATO", "歐洲共同體", "國際聯盟"], answer: "NATO", explanation: "1955年東歐社會主義國家成立華約，形成兩大軍事集團對峙。" },
+{ question: "古巴導彈危機發生於哪一年？", options: ["1956年", "1962年", "1968年", "1973年"], answer: "1962年", explanation: "美蘇因蘇聯在古巴部署導彈而瀕臨核戰邊緣，最終和平解決。" },
+{ question: "柏林圍牆倒塌發生於哪一年？", options: ["1985年", "1989年", "1991年", "1995年"], answer: "1989年", explanation: "1989年11月9日東德開放邊界，象徵冷戰結束的開始。" },
+{ question: "蘇聯正式解體於哪一年？", options: ["1989年", "1991年", "1993年", "1995年"], answer: "1991年", explanation: "1991年12月25日戈巴契夫辭職，蘇聯紅旗降下，標誌冷戰正式結束。" },
+{ question: "歐洲聯盟（EU）的成立條約是？", options: ["凡爾賽條約", "馬斯垂克條約", "羅馬條約", "申根協定"], answer: "馬斯垂克條約", explanation: "1993年《馬斯垂克條約》生效，歐洲共同體正式轉為歐盟。" },
+{ question: "古希臘最早的民主改革者是？", options: ["梭倫", "克里斯提尼", "伯里克利", "亞里斯多德"], answer: "梭倫", explanation: "公元前594年梭倫改革取消債奴，奠定雅典民主基礎。" },
+{ question: "羅馬帝國最長壽的皇帝是？", options: ["奧古斯都", "圖拉真", "安東尼·庇護", "馬可·奧里略"], answer: "安東尼·庇護", explanation: "安東尼·庇護統治23年（138-161），被視為「五賢帝」中最和平的時期。" },
+{ question: "中世紀「神聖羅馬帝國」由哪位法蘭克國王加冕建立？", options: ["查理曼大帝", "克洛維", "鄂圖一世", "亨利四世"], answer: "查理曼大帝", explanation: "800年聖誕節，教皇利奧三世在羅馬為查理曼加冕，開啟神聖羅馬帝國傳統。" },
+{ question: "英法百年戰爭結束後，英國失去的領土是？", options: ["諾曼第", "阿基坦", "加來", "所有法國領土"], answer: "所有法國領土", explanation: "1453年戰爭結束，英國僅剩加來（後於1558年失去）。" },
+{ question: "文藝復興時期，尼德蘭畫派最著名的大師是？", options: ["楊·凡·艾克", "達文西", "米開朗基羅", "拉斐爾"], answer: "楊·凡·艾克", explanation: "凡·艾克的《阿諾芬尼夫婦像》以油畫技法革新聞名。" },
+{ question: "宗教改革後，新教三大主流派別是路德宗、加爾文宗與？", options: ["安立甘宗", "天主教", "東正教", "浸信會"], answer: "安立甘宗", explanation: "英國國教安立甘宗因亨利八世改革而獨立於羅馬。" },
+{ question: "啟蒙運動中，盧梭的《社會契約論》提出「主權在民」理念，影響了？", options: ["美國獨立宣言", "法國大革命", "維也納會議", "工業革命"], answer: "法國大革命", explanation: "「人生而自由，卻無往不在枷鎖之中」成為革命口號。" },
+{ question: "拿破崙法典（Code Napoléon）最核心的原則是？", options: ["君主專制", "法律面前人人平等", "封建特權", "宗教裁判"], answer: "法律面前人人平等", explanation: "該法典廢除封建特權，成為近代歐洲民法典的藍本。" },
+{ question: "19世紀英國首相，推行「自由貿易」政策的是？", options: ["丘吉爾", "維多利亞女王", "羅伯特·皮爾", "迪斯雷利"], answer: "羅伯特·皮爾", explanation: "皮爾1846年廢除《穀物法》，開啟英國自由貿易時代。" },
+{ question: "德國統一的「鐵血政策」推行者是？", options: ["威廉一世", "俾斯麥", "希特勒", "威廉二世"], answer: "俾斯麥", explanation: "俾斯麥以「鐵與血」三次戰爭完成德意志統一。" },
+{ question: "第一次世界大戰的「凡爾登戰役」被稱為？", options: ["凡爾登絞肉機", "索姆河戰役", "坦能堡戰役", "加里波利戰役"], answer: "凡爾登絞肉機", explanation: "1916年法德雙方死傷近百萬，被視為一戰最慘烈的消耗戰。" },
+{ question: "二戰中，英國堅持抵抗納粹的首相是？", options: ["張伯倫", "邱吉爾", "艾德禮", "麥克米倫"], answer: "邱吉爾", explanation: "邱吉爾「我們將戰鬥到底」的演說鼓舞英國人民度過不列顛之戰。" },
+{ question: "二戰後，美國推行的「馬歇爾計劃」援助哪個地區？", options: ["亞洲", "西歐", "拉丁美洲", "非洲"], answer: "西歐", explanation: "1948-1952年美國提供130億美元，幫助西歐重建以對抗共產主義。" },
+{ question: "冷戰期間，美蘇太空競賽的標誌性事件是蘇聯發射？", options: ["阿波羅11號", "史普尼克1號", "水星計劃", "太空梭"], answer: "史普尼克1號", explanation: "1957年史普尼克1號是人類第一顆人造衛星，震撼美國。" },
+{ question: "1990年兩德統一的正式日期是？", options: ["1989年11月9日", "1990年10月3日", "1991年12月25日", "1993年1月1日"], answer: "1990年10月3日", explanation: "東德併入西德，德意志聯邦共和國完成統一。" },
+{ question: "古羅馬元老院最著名的演說家是？", options: ["凱撒", "西塞羅", "屋大維", "塔西佗"], answer: "西塞羅", explanation: "西塞羅的反喀提林演說成為拉丁文學經典。" },
+{ question: "拜占庭帝國最後一位皇帝是？", options: ["查士丁尼一世", "君士坦丁十一世", "希拉克略", "巴西爾二世"], answer: "君士坦丁十一世", explanation: "1453年君士坦丁堡陷落，君士坦丁十一世戰死，拜占庭帝國滅亡。" },
+{ question: "中世紀「黑死病」傳播的主要載體是？", options: ["老鼠與跳蚤", "蒼蠅", "蚊子", "豬"], answer: "老鼠與跳蚤", explanation: "鼠疫經由黑鼠與跳蚤叮咬傳播，14世紀殺死歐洲2500萬人。" },
+{ question: "文藝復興雕塑《大衛像》的作者是？", options: ["達文西", "米開朗基羅", "多那太羅", "貝尼尼"], answer: "米開朗基羅", explanation: "1504年完成的5.17米大理石像，象徵佛羅倫斯共和精神。" },
+{ question: "宗教改革中，反對路德的「再洗禮派」主張？", options: ["嬰兒洗禮", "成人洗禮", "無洗禮", "教皇至上"], answer: "成人洗禮", explanation: "再洗禮派堅持只有成年信徒才可受洗，遭天主教與新教共同迫害。" },
+{ question: "啟蒙運動百科全書的主編是？", options: ["伏爾泰", "狄德羅", "盧梭", "孟德斯鳩"], answer: "狄德羅", explanation: "狄德羅與達朗貝爾主編《百科全書》，匯集啟蒙思想精華。" },
+{ question: "美國獨立戰爭的最後決定性戰役是？", options: ["列星頓槍聲", "約克鎮圍攻", "薩拉托加戰役", "班克山戰役"], answer: "約克鎮圍攻", explanation: "1781年美法聯軍迫使英軍康沃利斯投降，戰爭實質結束。" },
+{ question: "法國大革命中，處決路易十六的斷頭台首次使用於？", options: ["1792年", "1793年", "1789年", "1804年"], answer: "1793年", explanation: "1793年1月21日路易十六被送上斷頭台。" },
+{ question: "拿破崙遠征俄國失敗的主要原因是？", options: ["嚴寒冬季", "法國海軍戰敗", "西班牙游擊戰", "英國封鎖"], answer: "嚴寒冬季", explanation: "1812年「1812年戰役」，法軍因俄國嚴冬與焦土政策損失50萬大軍。" },
+{ question: "第一次工業革命的「紡織革命」關鍵發明是？", options: ["珍妮紡紗機", "蒸汽機", "火車", "電燈"], answer: "珍妮紡紗機", explanation: "1764年哈格里夫斯發明珍妮機，大幅提升紡紗效率。" },
+{ question: "19世紀歐洲三大社會主義思想家是馬克思、恩格斯與？", options: ["普魯東", "巴枯寧", "拉薩爾", "列寧"], answer: "普魯東", explanation: "普魯東「財產就是盜竊」影響無政府主義與早期社會主義。" },
+{ question: "德意志帝國皇帝威廉二世推行「世界政策」的主要對手是？", options: ["英國", "法國", "俄國", "美國"], answer: "英國", explanation: "威廉二世海軍擴張直接挑戰英國「日不落」海上霸權。" },
+{ question: "一戰中，美國參戰的直接導火線是？", options: ["齊默爾曼電報", "盧西塔尼亞號沉沒", "凡爾登戰役", "俄國革命"], answer: "齊默爾曼電報", explanation: "1917年德國密電墨西哥攻打美國，促使威爾遜宣戰。" },
+{ question: "二戰歐洲戰場的最後戰役是？", options: ["諾曼第登陸", "阿登反擊戰", "柏林戰役", "義大利戰役"], answer: "柏林戰役", explanation: "1945年4-5月蘇軍攻克柏林，希特勒自殺。" },
+{ question: "冷戰期間，美國總統杜魯門提出的「杜魯門主義」針對？", options: ["共產主義擴張", "法西斯復辟", "殖民地獨立", "經濟危機"], answer: "共產主義擴張", explanation: "1947年杜魯門主義承諾援助希臘、土耳其，開啟冷戰遏止政策。" },
+{ question: "古希臘奧林匹克運動會最早舉辦於？", options: ["公元前776年", "公元前490年", "公元前323年", "公元前27年"], answer: "公元前776年", explanation: "首屆奧運會在奧林匹亞舉行，每四年一次，休戰期間舉行。" },
+{ question: "羅馬共和國的「十二銅表法」是？", options: ["最早成文法", "宗教法典", "軍事法", "貿易法"], answer: "最早成文法", explanation: "公元前450年頒布，保護平民權利，奠定羅馬法基礎。" },
+{ question: "中世紀歐洲最著名的異端審判機構是？", options: ["宗教裁判所", "星室法庭", "巴士底獄", "斷頭台"], answer: "宗教裁判所", explanation: "西班牙宗教裁判所（1478年起）針對猶太人與異端，臭名昭著。" },
+{ question: "文藝復興時期，佛羅倫斯大教堂穹頂的設計者是？", options: ["布魯內萊斯基", "米開朗基羅", "達文西", "拉斐爾"], answer: "布魯內萊斯基", explanation: "布魯內萊斯基1420年設計的穹頂工程是工程學奇蹟。" },
+{ question: "馬丁·路德翻譯的《聖經》使用哪種語言？", options: ["拉丁文", "德文", "英文", "法文"], answer: "德文", explanation: "路德將《聖經》譯成德文，讓平民能直接閱讀，促進新教傳播。" },
+{ question: "啟蒙運動「社會契約論」的另一位提出者是？", options: ["霍布斯", "洛克", "盧梭", "孟德斯鳩"], answer: "霍布斯", explanation: "霍布斯《利維坦》主張人民將權力讓渡給絕對君主以換取安全。" },
+{ question: "美國憲法制定於哪一年？", options: ["1776年", "1787年", "1804年", "1865年"], answer: "1787年", explanation: "費城制憲會議制定聯邦憲法，1789年生效。" },
+{ question: "拿破崙帝國瓦解後，歐洲恢復舊王朝的是？", options: ["維也納會議", "巴黎和會", "凡爾賽會議", "波茨坦會議"], answer: "維也納會議", explanation: "1815年會議恢復法國波旁王朝與歐洲均勢。" },
+{ question: "工業革命中，瓦特蒸汽機改良於？", options: ["1769年", "1800年", "1825年", "1840年"], answer: "1769年", explanation: "瓦特專利蒸汽機取代紐科門機，真正推動工廠制。" },
+{ question: "馬克思《資本論》第一卷出版於？", options: ["1848年", "1867年", "1883年", "1917年"], answer: "1867年", explanation: "該書系統分析資本主義生產方式與剩餘價值。" },
+{ question: "一戰後成立的國際組織是？", options: ["聯合國", "國際聯盟", "歐盟", "華沙公約"], answer: "國際聯盟", explanation: "1919年《凡爾賽條約》同時成立國聯，旨在維護和平。" },
+{ question: "二戰中，猶太人大屠殺（Holocaust）的指揮者是？", options: ["希姆萊", "戈林", "戈培爾", "隆美爾"], answer: "希姆萊", explanation: "希姆萊領導黨衛軍執行「最終解決方案」，屠殺600萬猶太人。" },
+{ question: "冷戰期間，美蘇「緩和」政策高峰期是？", options: ["1950年代", "1960年代", "1970年代", "1980年代"], answer: "1970年代", explanation: "尼克森訪華與戰略武器限制談判標誌緩和。" },
+{ question: "歐洲中世紀「封建領主」最主要的義務是？", options: ["繳稅", "提供軍事服務", "傳教", "修建教堂"], answer: "提供軍事服務", explanation: "封臣須為封君服40天兵役，構成封建軍事基礎。" },
+{ question: "文藝復興「人文主義」核心是？", options: ["以神為中心", "以人為中心", "以君主為中心", "以教會為中心"], answer: "以人為中心", explanation: "人文主義強調人的尊嚴、價值與世俗生活。" },
+{ question: "馬丁·路德反對的「贖罪券」是由教會出售用來？", options: ["建造聖彼得大教堂", "資助十字軍", "修建修道院", "購買土地"], answer: "建造聖彼得大教堂", explanation: "路德指責贖罪券販賣救贖，引發宗教改革。" },
+{ question: "啟蒙運動「天賦人權」概念來自？", options: ["洛克", "霍布斯", "盧梭", "伏爾泰"], answer: "洛克", explanation: "洛克主張生命、自由、財產為天賦不可剝奪權利。" },
+{ question: "美國內戰（1861-1865）的主要爭議是？", options: ["獨立", "奴隸制", "稅收", "領土"], answer: "奴隸制", explanation: "南方蓄奴州與北方廢奴州衝突導致南北戰爭。" },
+{ question: "普魯士統一德意志的三場戰爭分別是？", options: ["丹麥戰爭、普奧戰爭、普法戰爭", "拿破崙戰爭、克里米亞戰爭、普法戰爭", "七年戰爭、普奧戰爭、普法戰爭", "奧斯曼戰爭、普法戰爭、殖民戰爭"], answer: "丹麥戰爭、普奧戰爭、普法戰爭", explanation: "1864-1871年三場戰爭由俾斯麥策劃，完成統一。" },
+{ question: "一戰「凡爾賽條約」簽署於？", options: ["1918年", "1919年", "1920年", "1921年"], answer: "1919年", explanation: "1919年6月28日在凡爾賽宮鏡廳簽署。" },
+{ question: "二戰太平洋戰場，日本偷襲的港口是？", options: ["中途島", "珍珠港", "瓜達爾卡納爾", "沖繩"], answer: "珍珠港", explanation: "1941年12月7日日本突襲珍珠港，美國參戰。" },
+{ question: "冷戰「鐵幕」一詞最早出自？", options: ["史達林", "邱吉爾", "杜魯門", "馬歇爾"], answer: "邱吉爾", explanation: "1946年富爾頓演說中邱吉爾首次使用「鐵幕」描述東歐。" },
+{ question: "古希臘「伯羅奔尼撒戰爭」的勝利者是？", options: ["雅典", "斯巴達", "波斯", "馬其頓"], answer: "斯巴達", explanation: "公元前431-404年戰爭，斯巴達獲勝，雅典衰落。" },
+{ question: "羅馬帝國「五賢帝」時代最著名的征服者是？", options: ["圖拉真", "哈德良", "安東尼·庇護", "馬可·奧里略"], answer: "圖拉真", explanation: "圖拉真將帝國版圖擴至最大，征服達西亞。" },
+{ question: "中世紀歐洲「十字軍東征」總共進行了幾次？", options: ["4次", "8次", "12次", "16次"], answer: "8次", explanation: "1096-1291年八次主要東征，後期失敗。" },
+{ question: "文藝復興時期，達文西的《最後的晚餐》繪於？", options: ["米蘭", "佛羅倫斯", "羅馬", "巴黎"], answer: "米蘭", explanation: "1495-1498年繪於米蘭聖瑪利亞感恩修道院餐廳。" },
+{ question: "宗教改革後，天主教會召開「特倫托會議」目的是？", options: ["反擊新教", "支持新教", "分裂教會", "廢除教皇"], answer: "反擊新教", explanation: "1545-1563年特倫托會議改革天主教，開啟反宗教改革。" },
+{ question: "啟蒙運動「理性時代」的代表國家是？", options: ["英國", "法國", "德國", "義大利"], answer: "法國", explanation: "法國是啟蒙思想家最集中的國家，伏爾泰、盧梭、狄德羅皆為法國人。" },
+{ question: "拿破崙「大陸封鎖令」針對的是？", options: ["英國", "俄國", "奧地利", "普魯士"], answer: "英國", explanation: "1806年封鎖令禁止歐洲與英國貿易，欲扼殺英國經濟。" },
+{ question: "英國工業革命的「工廠制」最早出現於？", options: ["棉紡織業", "鋼鐵業", "鐵路", "汽車"], answer: "棉紡織業", explanation: "阿克萊特水力紡紗機（1769年）催生最早工廠。" },
+{ question: "19世紀「共產國際」的前身是？", options: ["第一國際", "第二國際", "第三國際", "第四國際"], answer: "第一國際", explanation: "1864年馬克思參與成立第一國際（國際工人協會）。" },
+{ question: "一戰「索姆河戰役」是？", options: ["英軍最大傷亡戰役", "法軍勝利", "德軍閃電戰", "海戰"], answer: "英軍最大傷亡戰役", explanation: "1916年首日英軍傷亡近6萬，成為一戰象徵。" },
+{ question: "二戰「敦克爾克大撤退」發生於？", options: ["1940年", "1944年", "1945年", "1939年"], answer: "1940年", explanation: "1940年5-6月33萬盟軍從敦克爾克撤回英國。" },
+{ question: "冷戰「柏林空運」是美國對？", options: ["東柏林封鎖的回應", "西柏林援助", "華沙公約", "古巴危機"], answer: "東柏林封鎖的回應", explanation: "1948-1949年蘇聯封鎖西柏林，美英空運補給277萬噸物資。" },
+{ question: "古羅馬「布匿戰爭」對手是？", options: ["迦太基", "希臘", "埃及", "波斯"], answer: "迦太基", explanation: "三次布匿戰爭（前264-146年），羅馬最終摧毀迦太基。" },
+{ question: "拜占庭帝國最偉大的皇帝是？", options: ["查士丁尼一世", "君士坦丁大帝", "希拉克略", "巴西爾二世"], answer: "查士丁尼一世", explanation: "查士丁尼編纂《羅馬法大全》，收復西羅馬部分領土。" },
+{ question: "中世紀「百年戰爭」中，英國長弓手的著名戰役是？", options: ["阿金庫爾戰役", "克雷西戰役", "普瓦捷戰役", "以上皆是"], answer: "以上皆是", explanation: "長弓在克雷西（1346）、普瓦捷（1356）、阿金庫爾（1415）三次大勝法國。" },
+{ question: "文藝復興「北方文藝復興」中心是？", options: ["尼德蘭", "法國", "英國", "德國"], answer: "尼德蘭", explanation: "北方文藝復興以油畫與寫實風格著稱，如凡·艾克兄弟。" },
+{ question: "馬丁·路德《九十五條論綱》張貼地點是？", options: ["維滕貝格城堡教堂", "羅馬梵蒂岡", "日內瓦", "倫敦"], answer: "維滕貝格城堡教堂", explanation: "1517年10月31日張貼，象徵宗教改革開始。" },
+{ question: "啟蒙運動「哲學王」概念來自？", options: ["柏拉圖", "亞里斯多德", "蘇格拉底", "伊拉斯謨"], answer: "柏拉圖", explanation: "伏爾泰等啟蒙思想家借用柏拉圖《理想國》理念。" },
+{ question: "法國大革命「國民議會」成立於？", options: ["1789年", "1793年", "1804年", "1815年"], answer: "1789年", explanation: "1789年6月第三等級成立國民議會，宣誓網球場誓言。" },
+{ question: "拿破崙「百日王朝」結束於？", options: ["滑鐵盧戰役", "莫斯科撤退", "埃及遠征", "加冕典禮"], answer: "滑鐵盧戰役", explanation: "1815年6月滑鐵盧戰敗，拿破崙第二次退位。" },
+{ question: "英國「工業革命」標誌性事件是？", options: ["瓦特改良蒸汽機", "珍妮機", "火車發明", "以上皆是"], answer: "以上皆是", explanation: "1760-1840年多項發明共同推動英國成為世界工廠。" },
+{ question: "19世紀「統一義大利」的「紅衫軍」領導人是？", options: ["加里波底", "加富爾", "馬志尼", "維克多·艾曼紐二世"], answer: "加里波底", explanation: "1860年加里波底率千名紅衫軍征服西西里與那不勒斯。" },
+{ question: "一戰「薩拉熱窩事件」暗殺對象是？", options: ["斐迪南大公", "威廉二世", "尼古拉二世", "喬治五世"], answer: "斐迪南大公", explanation: "1914年6月28日塞爾維亞青年普林西普刺殺奧匈帝國王儲。" },
+{ question: "二戰「諾曼第登陸」代號是？", options: ["D-Day", "Overlord", "Market Garden", "Torch"], answer: "D-Day", explanation: "1944年6月6日盟軍發動「霸王行動」（Operation Overlord）。" },
+{ question: "冷戰「古巴導彈危機」解決後，兩國簽署？", options: ["部分禁止核試驗條約", "柏林協定", "華沙條約", "馬歇爾計劃"], answer: "部分禁止核試驗條約", explanation: "1963年美蘇英簽署《部分禁止核試驗條約》，標誌緩和開始。" },
+{ question: "古希臘「希波戰爭」的著名戰役是？", options: ["溫泉關戰役", "馬拉松戰役", "薩拉米斯海戰", "以上皆是"], answer: "以上皆是", explanation: "希波戰爭中希臘聯軍多次以少勝多，保衛獨立。" },
+{ question: "羅馬帝國「君士坦丁堡」原名是？", options: ["拜占庭", "羅馬", "亞歷山卓", "雅典"], answer: "拜占庭", explanation: "330年君士坦丁大帝遷都，將拜占庭改名君士坦丁堡。" },
+{ question: "中世紀歐洲「封建主義」起源於？", options: ["法蘭克王國", "拜占庭", "阿拉伯帝國", "維京人"], answer: "法蘭克王國", explanation: "查理曼時代發展出的封君封臣制度。" },
+{ question: "文藝復興「三傑」是指達文西、米開朗基羅與？", options: ["拉斐爾", "布魯內萊斯基", "波提且利", "提香"], answer: "拉斐爾", explanation: "三人代表文藝復興藝術最高成就。" },
+{ question: "宗教改革「喀爾文教」在蘇格蘭的傳播者是？", options: ["約翰·諾克斯", "亨利八世", "慈運理", "梅蘭希頓"], answer: "約翰·諾克斯", explanation: "諾克斯將喀爾文主義帶入蘇格蘭，創立長老會。" },
+{ question: "啟蒙運動「百科全書派」核心人物是？", options: ["狄德羅與達朗貝爾", "伏爾泰與盧梭", "孟德斯鳩與洛克", "康德"], answer: "狄德羅與達朗貝爾", explanation: "1751-1772年出版28卷《百科全書》，匯集啟蒙知識。" },
+{ question: "美國「路易斯安那購地」從哪國買得？", options: ["法國", "英國", "西班牙", "墨西哥"], answer: "法國", explanation: "1803年傑佛遜以1500萬美元向拿破崙購得，美國領土翻倍。" },
+{ question: "法國大革命「羅伯斯庇爾」被處決於？", options: ["1794年", "1793年", "1789年", "1804年"], answer: "1794年", explanation: "熱月政變後羅伯斯庇爾被送上斷頭台，恐怖統治結束。" },
+{ question: "拿破崙「法典」影響最深的是？", options: ["歐洲民法", "英國普通法", "美國憲法", "中國法律"], answer: "歐洲民法", explanation: "《拿破崙法典》成為法國及多國民法基礎。" },
+{ question: "英國「維多利亞時代」最著名的首相是？", options: ["迪斯雷利與格萊斯頓", "邱吉爾", "張伯倫", "梅傑"], answer: "迪斯雷利與格萊斯頓", explanation: "兩人輪流執政，推行帝國擴張與國內改革。" },
+{ question: "19世紀「俾斯麥」被稱為？", options: ["鐵血宰相", "鐵腕皇帝", "和平使者", "民主先驅"], answer: "鐵血宰相", explanation: "俾斯麥以鐵血政策統一德國。" },
+{ question: "一戰「凡爾登戰役」持續時間？", options: ["10個月", "3個月", "1年", "2年"], answer: "10個月", explanation: "1916年2-12月，法德雙方傷亡近百萬。" },
+{ question: "二戰「珍珠港事件」後，美國對日宣戰日期是？", options: ["1941年12月8日", "1941年12月7日", "1942年1月1日", "1941年12月11日"], answer: "1941年12月8日", explanation: "羅斯福「國恥日」演說後，國會通過宣戰。" },
+{ question: "冷戰「太空競賽」蘇聯首次將人類送上太空的是？", options: ["加加林", "季托夫", "捷列什科娃", "列昂諾夫"], answer: "加加林", explanation: "1961年4月12日尤里·加加林成為第一位太空人。" },
+{ question: "歐洲「申根協定」簽署於？", options: ["1985年", "1992年", "1995年", "2000年"], answer: "1985年", explanation: "1985年德法等5國簽署，逐步實現歐洲無邊境通行。" },
+{ question: "古希臘「德爾菲神廟」是獻給？", options: ["阿波羅", "雅典娜", "宙斯", "波塞頓"], answer: "阿波羅", explanation: "德爾菲是阿波羅神諭所在地，古希臘聖地。" },
+{ question: "羅馬「共和國」結束於？", options: ["公元前27年", "公元前44年", "公元前31年", "公元14年"], answer: "公元前27年", explanation: "屋大維獲「奧古斯都」稱號，共和轉為帝國。" },
+{ question: "中世紀「英格蘭大憲章」簽署於？", options: ["1215年", "1066年", "1346年", "1453年"], answer: "1215年", explanation: "約翰王被迫簽署，限制王權，奠定英國憲政基礎。" },
+{ question: "文藝復興「波提且利」名畫《維納斯的誕生》現藏？", options: ["烏菲茲美術館", "羅浮宮", "梵蒂岡", "大英博物館"], answer: "烏菲茲美術館", explanation: "1480年代作品，象徵佛羅倫斯文藝復興。" },
+{ question: "宗教改革「慈運理」是瑞士哪座城市的改革領袖？", options: ["蘇黎世", "日內瓦", "巴塞爾", "伯恩"], answer: "蘇黎世", explanation: "慈運理1520年代在蘇黎世推行改革，與路德並稱。" },
+{ question: "啟蒙運動「康德」提出「永久和平」理念於？", options: ["1795年", "1781年", "1784年", "1800年"], answer: "1795年", explanation: "《永久和平論》影響現代國際法與聯合國理念。" },
+{ question: "美國「門羅主義」宣布於？", options: ["1823年", "1776年", "1787年", "1861年"], answer: "1823年", explanation: "警告歐洲勿干涉美洲事務，標誌美國外交獨立。" },
+{ question: "法國大革命「雅各賓俱樂部」領導人是？", options: ["羅伯斯庇爾", "丹東", "馬拉", "以上皆是"], answer: "以上皆是", explanation: "雅各賓派激進派主導恐怖統治。" },
+{ question: "拿破崙「埃及遠征」帶回的著名文物是？", options: ["羅塞塔石碑", "金字塔", "法老木乃伊", "獅身人面像"], answer: "羅塞塔石碑", explanation: "1799年發現羅塞塔石碑，後解讀古埃及象形文字。" },
+{ question: "英國「維多利亞女王」在位時間？", options: ["1837-1901年", "1815-1837年", "1901-1952年", "1714-1830年"], answer: "1837-1901年", explanation: "在位64年，英國帝國鼎盛時期。" },
+{ question: "19世紀「克里米亞戰爭」參戰國包括？", options: ["俄國 vs 英法", "德國 vs 法國", "奧地利 vs 俄國", "義大利 vs 西班牙"], answer: "俄國 vs 英法", explanation: "1853-1856年戰爭，暴露俄國落後，促成改革。" },
+{ question: "一戰「坦能堡戰役」是？", options: ["德軍大勝俄軍", "法軍勝利", "英軍勝利", "土耳其勝利"], answer: "德軍大勝俄軍", explanation: "1914年興登堡指揮德軍包圍俄軍，扭轉東線。" },
+{ question: "二戰「中途島海戰」美軍指揮官是？", options: ["尼米茲", "麥克阿瑟", "巴頓", "艾森豪"], answer: "尼米茲", explanation: "尼米茲指揮美軍航母擊沉4艘日軍航母。" },
+{ question: "冷戰「越戰」結束於？", options: ["1975年", "1968年", "1963年", "1973年"], answer: "1975年", explanation: "1975年西貢陷落，北越統一越南。" },
+{ question: "歐洲「馬斯垂克條約」簽署於？", options: ["1992年", "1985年", "1995年", "2000年"], answer: "1992年", explanation: "1992年簽署，1993年生效，正式成立歐盟。" },
+{ question: "古希臘「希臘化時代」始於？", options: ["亞歷山大大帝去世", "伯羅奔尼撒戰爭結束", "希波戰爭結束", "羅馬征服"], answer: "亞歷山大大帝去世", explanation: "公元前323年亞歷山大死後，希臘文化向東擴散。" },
+{ question: "羅馬帝國「戴克里先改革」將帝國分為？", options: ["四帝共治", "東西兩部", "共和制", "君主制"], answer: "四帝共治", explanation: "284年起戴克里先實行四帝共治，穩定帝國。" },
+{ question: "中世紀「維京人」最著名的入侵目標是？", options: ["英格蘭", "法國", "義大利", "西班牙"], answer: "英格蘭", explanation: "793年林迪斯法恩修道院遭襲，開啟維京時代。" },
+{ question: "文藝復興「提香」是哪國畫家？", options: ["義大利", "尼德蘭", "德國", "西班牙"], answer: "義大利", explanation: "威尼斯畫派大師，以色彩運用聞名。" },
+{ question: "宗教改革「茨溫利」與路德最大的分歧是？", options: ["聖餐觀", "洗禮", "教會權力", "贖罪券"], answer: "聖餐觀", explanation: "茨溫利主張聖餐為象徵，路德主張「同在說」。" },
+{ question: "啟蒙運動「康德」三大批判著作是？", options: ["純粹理性批判、實踐理性批判、判斷力批判", "社會契約論、論法的精神", "政府論、利維坦"], answer: "純粹理性批判、實踐理性批判、判斷力批判", explanation: "康德三大批判奠定現代哲學基礎。" },
+{ question: "美國「聯邦黨人文集」作者包括？", options: ["漢密爾頓、麥迪遜、傑伊", "傑佛遜、華盛頓", "潘恩、富蘭克林"], answer: "漢密爾頓、麥迪遜、傑伊", explanation: "1787-1788年85篇文章說服民眾支持新憲法。" },
+{ question: "法國大革命「國民公會」時期處決的王后是？", options: ["瑪麗·安托瓦內特", "瑪麗·路易絲", "約瑟芬", "歐仁妮"], answer: "瑪麗·安托瓦內特", explanation: "1793年10月被送上斷頭台。" },
+{ question: "拿破崙「加冕典禮」舉行於？", options: ["1804年", "1799年", "1815年", "1800年"], answer: "1804年", explanation: "1804年12月在巴黎聖母院自行加冕為皇帝。" },
+{ question: "英國「鐵路之父」史蒂芬森發明？", options: ["旅行者號機車", "火箭號機車", "蒸汽船", "紡紗機"], answer: "旅行者號機車", explanation: "1825年首條客運鐵路使用史蒂芬森機車。" },
+{ question: "19世紀「巴黎公社」發生於？", options: ["1871年", "1848年", "1830年", "1792年"], answer: "1871年", explanation: "普法戰爭後巴黎工人建立第一個無產階級政權。" },
+{ question: "一戰「加里波利戰役」參戰國是？", options: ["英國 vs 土耳其", "法國 vs 德國", "俄國 vs 奧匈", "義大利 vs 奧匈"], answer: "英國 vs 土耳其", explanation: "1915年澳紐軍團在土耳其加里波利半島慘敗。" },
+{ question: "二戰「斯大林格勒戰役」是？", options: ["蘇聯轉折點", "德軍勝利", "美軍參戰", "義大利投降"], answer: "蘇聯轉折點", explanation: "1942-1943年蘇軍勝利，扭轉東線戰局。" },
+{ question: "冷戰「韓戰」停戰協定簽署於？", options: ["1953年", "1950年", "1955年", "1961年"], answer: "1953年", explanation: "1953年7月27日簽署，朝鮮半島分裂至今。" },
+{ question: "歐洲「里斯本條約」生效於？", options: ["2009年", "1992年", "2004年", "2016年"], answer: "2009年", explanation: "取代歐洲憲法，強化歐盟決策效率。" },
+{ question: "古羅馬「凱撒」被刺殺於？", options: ["公元前44年3月15日", "公元前27年", "公元14年", "公元前31年"], answer: "公元前44年3月15日", explanation: "元老院「3月15日」刺殺事件導致共和終結。" },
+{ question: "拜占庭帝國「查士丁尼法典」是？", options: ["羅馬法大全", "宗教法", "軍事法", "貿易法"], answer: "羅馬法大全", explanation: "533-534年編纂，成為歐洲法學基礎。" },
+{ question: "中世紀「諾曼征服」發生於？", options: ["1066年", "1215年", "1346年", "1453年"], answer: "1066年", explanation: "威廉公爵征服英格蘭，建立諾曼王朝。" },
+{ question: "文藝復興「米開朗基羅」為西斯汀小堂繪製？", options: ["創世紀", "最後的晚餐", "蒙娜麗莎", "維納斯的誕生"], answer: "創世紀", explanation: "1508-1512年天花板壁畫為文藝復興巔峰。" },
+{ question: "宗教改革「亨利八世」解散了？", options: ["修道院", "議會", "貴族", "軍隊"], answer: "修道院", explanation: "1536-1540年沒收修道院財產，強化王權。" },
+{ question: "啟蒙運動「伏爾泰」最著名的哲學小說是？", options: ["老實人", "社會契約論", "論法的精神", "純粹理性批判"], answer: "老實人", explanation: "1759年《老實人》嘲諷樂觀哲學與宗教迷信。" },
+{ question: "美國「獨立戰爭」首戰是？", options: ["列星頓槍聲", "約克鎮", "薩拉托加", "班克山"], answer: "列星頓槍聲", explanation: "1775年4月「射出世界第一槍」，戰爭爆發。" },
+{ question: "法國大革命「攻佔巴士底獄」日期是？", options: ["1789年7月14日", "1789年7月4日", "1793年1月21日", "1794年7月27日"], answer: "1789年7月14日", explanation: "至今為法國國慶日。" },
+{ question: "拿破崙「莫斯科撤退」發生於？", options: ["1812年", "1805年", "1815年", "1799年"], answer: "1812年", explanation: "拿破崙60萬大軍僅剩2萬，帝國開始衰落。" },
+{ question: "英國「維多利亞時代」帝國擴張高峰期是？", options: ["19世紀中後期", "18世紀", "20世紀", "17世紀"], answer: "19世紀中後期", explanation: "「日不落帝國」領土達全球四分之一。" },
+{ question: "19世紀「俾斯麥」統一德國後的皇帝是？", options: ["威廉一世", "威廉二世", "腓特烈三世", "希特勒"], answer: "威廉一世", explanation: "1871年威廉一世在凡爾賽宮加冕德意志皇帝。" },
+{ question: "一戰「美國參戰」年份是？", options: ["1917年", "1914年", "1918年", "1916年"], answer: "1917年", explanation: "威爾遜總統宣戰，扭轉協約國劣勢。" },
+{ question: "二戰「原子彈」投放城市是？", options: ["廣島與長崎", "東京", "大阪", "京都"], answer: "廣島與長崎", explanation: "1945年8月結束太平洋戰爭。" },
+{ question: "冷戰「柏林危機」高峰是？", options: ["1961年建圍牆", "1948年空運", "1989年倒塌", "1990年統一"], answer: "1961年建圍牆", explanation: "東德建圍牆阻止東德人逃往西柏林。" },
+{ question: "歐洲「申根區」目前成員國數量約？", options: ["27國", "15國", "10國", "30國"], answer: "27國", explanation: "目前26國（含非歐盟國），實現自由通行。" },
+{ question: "古希臘「荷馬史詩」包括？", options: ["伊利亞德與奧德賽", "神譜", "歷史", "理想國"], answer: "伊利亞德與奧德賽", explanation: "西方文學最早作品，描述特洛伊戰爭與奧德修斯返鄉。" },
+{ question: "羅馬「龐培」與凱撒內戰結束於？", options: ["公元前48年法薩羅斯戰役", "公元前44年", "公元前31年", "公元前27年"], answer: "公元前48年法薩羅斯戰役", explanation: "凱撒擊敗龐培，成為獨裁者。" },
+{ question: "中世紀「卡諾莎事件」是？", options: ["亨利四世向教皇悔罪", "查理曼加冕", "十字軍東征", "諾曼征服"], answer: "亨利四世向教皇悔罪", explanation: "1077年神聖羅馬皇帝亨利四世赤足雪地悔罪，教權勝利。" },
+{ question: "文藝復興「布魯內萊斯基」設計的建築是？", options: ["佛羅倫斯大教堂穹頂", "聖彼得大教堂", "西斯汀小堂", "羅浮宮"], answer: "佛羅倫斯大教堂穹頂", explanation: "1420年無支架穹頂工程奇蹟。" },
+{ question: "宗教改革「梅蘭希頓」是？", options: ["路德主要助手", "加爾文助手", "亨利八世助手", "慈運理助手"], answer: "路德主要助手", explanation: "梅蘭希頓起草《奧格斯堡信綱》，奠定路德宗教義。" },
+{ question: "啟蒙運動「盧梭」主張「天賦人權」與？", options: ["社會契約", "君主專制", "三權分立", "理性萬能"], answer: "社會契約", explanation: "《社會契約論》主張主權在民，影響法國大革命。" },
+{ question: "美國「華盛頓」拒絕連任第三任總統的原因是？", options: ["建立民主傳統", "健康問題", "政治鬥爭", "經濟危機"], answer: "建立民主傳統", explanation: "1797年主動退休，開創美國總統兩任傳統。" },
+{ question: "法國大革命「熱月政變」推翻？", options: ["羅伯斯庇爾", "拿破崙", "路易十六", "丹東"], answer: "羅伯斯庇爾", explanation: "1794年7月熱月政變結束恐怖統治。" },
+{ question: "拿破崙「滑鐵盧戰役」對手是？", options: ["威靈頓與布呂歇爾", "庫圖佐夫", "尼爾森", "麥克阿瑟"], answer: "威靈頓與布呂歇爾", explanation: "1815年英普聯軍擊敗拿破崙，結束百日王朝。" },
+{ question: "英國「格萊斯頓」首相推行？", options: ["自由主義改革", "帝國擴張", "工業管制", "宗教迫害"], answer: "自由主義改革", explanation: "多次擔任首相，推行教育、選舉改革。" },
+{ question: "19世紀「馬克思」逝世於？", options: ["1883年", "1848年", "1867年", "1917年"], answer: "1883年", explanation: "逝世於倫敦，葬於海格特公墓。" },
+{ question: "一戰「美國總統」威爾遜提出？", options: ["十四點和平原則", "門羅主義", "杜魯門主義", "馬歇爾計劃"], answer: "十四點和平原則", explanation: "1918年提出，成為國聯成立基礎。" },
+{ question: "二戰「巴頓將軍」指揮？", options: ["西歐裝甲軍", "太平洋艦隊", "空軍", "海軍"], answer: "西歐裝甲軍", explanation: "1944-1945年率第三軍團快速推進德國。" },
+{ question: "冷戰「甘迺迪」總統任內發生？", options: ["古巴導彈危機", "韓戰", "越戰結束", "柏林圍牆倒塌"], answer: "古巴導彈危機", explanation: "1962年甘迺迪成功迫使蘇聯撤除導彈。" },
+{ question: "歐洲「歐元」正式流通於？", options: ["2002年", "1999年", "1992年", "2009年"], answer: "2002年", explanation: "2002年1月1日紙幣與硬幣取代各國貨幣。" },
+{ question: "古希臘「畢達哥拉斯」提出？", options: ["畢達哥拉斯定理", "日心說", "地心說", "原子論"], answer: "畢達哥拉斯定理", explanation: "直角三角形斜邊平方等於兩直角邊平方和。" },
+{ question: "羅馬「屋大維」獲得「奧古斯都」稱號於？", options: ["公元前27年", "公元前44年", "公元14年", "公元前31年"], answer: "公元前27年", explanation: "元老院授予，標誌帝國開始。" },
+{ question: "中世紀「英格蘭國王」約翰被迫簽署？", options: ["大憲章", "十誡", "教皇詔書", "採邑契約"], answer: "大憲章", explanation: "1215年限制王權，成為英國憲政基石。" },
+{ question: "文藝復興「波提且利」最著名畫作是？", options: ["維納斯的誕生", "最後的晚餐", "創世紀", "雅典學院"], answer: "維納斯的誕生", explanation: "1485年左右作品，象徵古典美復興。" },
+{ question: "宗教改革「加爾文」主張？", options: ["預定論", "嬰兒洗禮", "教皇至上", "贖罪券"], answer: "預定論", explanation: "上帝預定得救者，影響清教徒與美國建國。" },
+{ question: "啟蒙運動「孟德斯鳩」提出？", options: ["三權分立", "社會契約", "天賦人權", "理性萬能"], answer: "三權分立", explanation: "《論法的精神》影響美國憲法與法國大革命。" },
+{ question: "美國「傑佛遜」起草？", options: ["獨立宣言", "憲法", "聯邦黨人文集", "門羅宣言"], answer: "獨立宣言", explanation: "1776年7月4日通過，宣告美國獨立。" },
+{ question: "法國大革命「拿破崙政變」發生於？", options: ["1799年", "1789年", "1793年", "1804年"], answer: "1799年", explanation: "霧月政變推翻督政府，建立執政府。" },
+{ question: "拿破崙「大陸封鎖」失敗主因是？", options: ["英國海軍優勢", "俄國入侵", "西班牙游擊", "普魯士反叛"], answer: "英國海軍優勢", explanation: "英國維持海上貿易，封鎖令無法生效。" },
+{ question: "英國「工業革命」棉紡織業中心是？", options: ["曼徹斯特", "倫敦", "伯明翰", "利物浦"], answer: "曼徹斯特", explanation: "被稱為「世界工廠」，棉紡織業最發達。" },
+{ question: "19世紀「俾斯麥」退休於？", options: ["1890年", "1871年", "1888年", "1914年"], answer: "1890年", explanation: "威廉二世解除其宰相職務。" },
+{ question: "一戰「俄國革命」發生於？", options: ["1917年", "1914年", "1918年", "1916年"], answer: "1917年", explanation: "二月革命推翻沙皇，十月革命建立蘇維埃政權。" },
+{ question: "二戰「希特勒」自殺日期是？", options: ["1945年4月30日", "1945年5月8日", "1944年6月6日", "1941年12月7日"], answer: "1945年4月30日", explanation: "柏林戰役期間自殺於地堡。" },
+{ question: "冷戰「尼克森」總統訪問？", options: ["中國", "蘇聯", "越南", "古巴"], answer: "中國", explanation: "1972年訪華，打破中美關係僵局。" },
+{ question: "歐盟「英國脫歐」公投於？", options: ["2016年", "2019年", "2020年", "2021年"], answer: "2016年", explanation: "6月23日公投通過，2020年正式脫歐。" },
+{ question: "古希臘「伯里克利」時代是？", options: ["雅典黃金時代", "斯巴達鼎盛期", "波斯統治", "羅馬征服"], answer: "雅典黃金時代", explanation: "公元前5世紀中葉，民主與文化高峰。" },
+{ question: "羅馬「君士坦丁大帝」遷都？", options: ["君士坦丁堡", "羅馬", "雅典", "亞歷山卓"], answer: "君士坦丁堡", explanation: "330年遷都，開啟拜占庭時代。" },
+{ question: "中世紀「查理曼大帝」加冕於？", options: ["800年", "1066年", "1215年", "1453年"], answer: "800年", explanation: "教皇利奧三世在羅馬加冕為「羅馬人的皇帝」。" },
+{ question: "文藝復興「拉斐爾」代表作《雅典學院》現藏？", options: ["梵蒂岡", "羅浮宮", "烏菲茲", "大英博物館"], answer: "梵蒂岡", explanation: "西斯汀小堂旁簽名室壁畫。" },
+{ question: "宗教改革「路德」翻譯《聖經》使用？", options: ["德文", "拉丁文", "英文", "法文"], answer: "德文", explanation: "1522年新約、1534年全本，促進德語統一。" },
+{ question: "啟蒙運動「伏爾泰」支持？", options: ["君主開明專制", "共和制", "無政府", "神權"], answer: "君主開明專制", explanation: "主張「哲學王」統治，與腓特烈大帝通信。" },
+{ question: "美國「漢密爾頓」主張？", options: ["強大中央政府", "州權至上", "無政府", "君主制"], answer: "強大中央政府", explanation: "聯邦黨人，創立美國第一銀行。" },
+{ question: "法國大革命「拿破崙」稱帝於？", options: ["1804年", "1799年", "1815年", "1789年"], answer: "1804年", explanation: "12月2日在巴黎聖母院加冕。" },
+{ question: "拿破崙「法典」頒布於？", options: ["1804年", "1799年", "1812年", "1815年"], answer: "1804年", explanation: "《法國民法典》至今影響全球。" },
+{ question: "英國「工業革命」鋼鐵業中心是？", options: ["伯明翰", "曼徹斯特", "倫敦", "利物浦"], answer: "伯明翰", explanation: "「黑鄉」地區鋼鐵與機械工業發達。" },
+{ question: "19世紀「加富爾」是義大利統一？", options: ["外交家", "軍事家", "哲學家", "畫家"], answer: "外交家", explanation: "撒丁王國首相，以外交聯合法國對抗奧地利。" },
+{ question: "一戰「興登堡」是？", options: ["德軍元帥", "英軍將領", "法軍將領", "俄軍將領"], answer: "德軍元帥", explanation: "坦能堡與凡爾登戰役指揮官。" },
+{ question: "二戰「艾森豪」是？", options: ["盟軍歐洲最高統帥", "太平洋統帥", "空軍司令", "海軍司令"], answer: "盟軍歐洲最高統帥", explanation: "1944年指揮諾曼第登陸，後任美國總統。" },
+{ question: "冷戰「雷根」總統推行？", options: ["星戰計畫", "馬歇爾計劃", "杜魯門主義", "尼克森主義"], answer: "星戰計畫", explanation: "1983年戰略防禦倡議，加速蘇聯經濟崩潰。" },
+{ question: "歐盟「歐洲議會」總部在？", options: ["斯特拉斯堡", "布魯塞爾", "法蘭克福", "盧森堡"], answer: "斯特拉斯堡", explanation: "每年部分會議在此舉行，象徵法德和解。" },
+{ question: "古希臘「梭倫改革」主要內容是？", options: ["取消債奴", "建立民主", "軍事訓練", "神廟建設"], answer: "取消債奴", explanation: "公元前594年改革，奠定雅典民主基礎。" },
+{ question: "羅馬「哈德良」建造？", options: ["哈德良長城", "萬神殿", "競技場", "凱旋門"], answer: "哈德良長城", explanation: "122年築於不列顛，防禦北方部落。" },
+{ question: "中世紀「鄂圖一世」加冕為？", options: ["神聖羅馬皇帝", "法蘭克皇帝", "拜占庭皇帝", "英格蘭國王"], answer: "神聖羅馬皇帝", explanation: "962年在羅馬加冕，正式開啟神聖羅馬帝國。" },
+{ question: "文藝復興「多那太羅」雕塑《大衛》是？", options: ["青銅像", "大理石像", "壁畫", "油畫"], answer: "青銅像", explanation: "1440年代作品，為最早文藝復興青銅裸體像。" },
+{ question: "宗教改革「英王亨利八世」與教皇決裂原因是？", options: ["離婚問題", "贖罪券", "聖餐觀", "預定論"], answer: "離婚問題", explanation: "教皇拒絕其與凱瑟琳離婚，導致1534年《至尊法案》。" },
+{ question: "啟蒙運動「狄德羅」主編？", options: ["百科全書", "社會契約論", "論法的精神", "老實人"], answer: "百科全書", explanation: "1751年起出版，傳播啟蒙思想。" },
+{ question: "美國「華盛頓」指揮？", options: ["大陸軍", "聯邦軍", "南方軍", "北方軍"], answer: "大陸軍", explanation: "1775-1783年領導獨立戰爭。" },
+{ question: "法國大革命「督政府」時期被拿破崙推翻於？", options: ["1799年", "1794年", "1793年", "1804年"], answer: "1799年", explanation: "霧月18日政變結束督政府。" },
+{ question: "拿破崙「帝國」最盛時控制歐洲？", options: ["大部分地區", "全部", "東歐", "南歐"], answer: "大部分地區", explanation: "1812年前控制從西班牙到波蘭。" },
+{ question: "英國「狄更斯」是？", options: ["小說家", "科學家", "哲學家", "政治家"], answer: "小說家", explanation: "《雙城記》、《孤雛淚》批判工業革命社會問題。" },
+{ question: "19世紀「馬克思」與恩格斯合著？", options: ["共產黨宣言", "資本論", "社會契約論", "論法的精神"], answer: "共產黨宣言", explanation: "1848年出版，號召無產階級革命。" },
+{ question: "一戰「英國」首相是？", options: ["勞合·喬治", "邱吉爾", "張伯倫", "艾德禮"], answer: "勞合·喬治", explanation: "1916-1922年領導英國度過一戰。" },
+{ question: "二戰「邱吉爾」演說？", options: ["我們將戰鬥到底", "鐵幕演說", "十四點原則", "杜魯門主義"], answer: "我們將戰鬥到底", explanation: "1940年敦克爾克後演說，鼓舞英國人民。" },
+{ question: "冷戰「戈巴契夫」推行？", options: ["改革與開放", "星戰計畫", "馬歇爾計劃", "鐵幕政策"], answer: "改革與開放", explanation: "1985年起「Perestroika」與「Glasnost」導致蘇聯解體。" },
+{ question: "歐盟「歐洲中央銀行」總部在？", options: ["法蘭克福", "布魯塞爾", "斯特拉斯堡", "盧森堡"], answer: "法蘭克福", explanation: "負責歐元貨幣政策。" },
+{ question: "古希臘「雅典娜」是？", options: ["智慧女神", "愛神", "戰神", "海神"], answer: "智慧女神", explanation: "雅典守護神，帕德嫩神廟供奉對象。" },
+{ question: "羅馬「尼祿」皇帝以？", options: ["暴政與焚燒羅馬", "擴張領土", "編纂法典", "遷都"], answer: "暴政與焚燒羅馬", explanation: "64年羅馬大火後迫害基督徒，後自殺。" },
+{ question: "中世紀「克洛維」是？", options: ["法蘭克國王", "英格蘭國王", "拜占庭皇帝", "羅馬皇帝"], answer: "法蘭克國王", explanation: "481年建立墨洛溫王朝，皈依基督教。" },
+{ question: "文藝復興「達文西」發明？", options: ["直升機概念", "蒸汽機", "印刷機", "火車"], answer: "直升機概念", explanation: "其手稿包含飛行器、坦克等超前設計。" },
+{ question: "宗教改革「約翰·諾克斯」創立？", options: ["蘇格蘭長老會", "英國國教", "路德宗", "加爾文宗"], answer: "蘇格蘭長老會", explanation: "1560年蘇格蘭宗教改革領袖。" },
+{ question: "啟蒙運動「盧梭」名言？", options: ["人是生而自由的", "我思故我在", "知識就是力量", "理性萬能"], answer: "人是生而自由的", explanation: "《社會契約論》開頭，影響革命。" },
+{ question: "美國「林肯」總統廢除？", options: ["奴隸制", "君主制", "聯邦", "憲法"], answer: "奴隸制", explanation: "1863年《解放宣言》，1865年憲法第13修正案。" },
+{ question: "法國大革命「恐怖統治」時期是？", options: ["1793-1794年", "1789年", "1799年", "1815年"], answer: "1793-1794年", explanation: "羅伯斯庇爾主政，處決數萬人。" },
+{ question: "拿破崙「聖赫勒拿島」是？", options: ["流放地", "加冕地", "戰場", "出生地"], answer: "流放地", explanation: "1815年後第二次流放，1821年逝世於此。" },
+{ question: "英國「工業革命」發明家「阿克萊特」發明？", options: ["水力紡紗機", "蒸汽機", "火車", "珍妮機"], answer: "水力紡紗機", explanation: "1769年專利，開啟工廠時代。" },
+{ question: "19世紀「俾斯麥」外交政策是？", options: ["孤立法國", "聯合法國", "聯俄", "聯英"], answer: "孤立法國", explanation: "三皇同盟與再保險條約孤立法國。" },
+{ question: "一戰「奧匈帝國」解體後成立？", options: ["多國獨立", "德國統一", "法國擴張", "英國殖民"], answer: "多國獨立", explanation: "奧地利、匈牙利、捷克斯洛伐克等獨立。" },
+{ question: "二戰「羅斯福」總統任內？", options: ["新政與二戰", "一戰", "冷戰", "越戰"], answer: "新政與二戰", explanation: "1933-1945年領導美國度過經濟危機與戰爭。" },
+{ question: "冷戰「布什」總統見證？", options: ["柏林圍牆倒塌", "古巴危機", "韓戰", "越戰結束"], answer: "柏林圍牆倒塌", explanation: "1989-1993年任內，冷戰結束。" },
+{ question: "歐盟「里斯本條約」主要目的是？", options: ["強化歐盟決策效率", "建立歐元", "擴大成員", "脫歐"], answer: "強化歐盟決策效率", explanation: "2009年生效，改革歐盟機構。" },
+{ question: "古希臘「亞里斯多德」是？", options: ["柏拉圖學生", "蘇格拉底學生", "畢達哥拉斯學生", "赫拉克利特學生"], answer: "柏拉圖學生", explanation: "逍遙學派創始人，影響西方哲學與科學。" },
+{ question: "羅馬「圖拉真」是？", options: ["五賢帝之一", "共和國領袖", "暴君", "哲學家皇帝"], answer: "五賢帝之一", explanation: "帝國版圖最大時期統治者。" },
+{ question: "中世紀「黑死病」奪走歐洲人口？", options: ["約三分之一", "一半", "十分之一", "全部"], answer: "約三分之一", explanation: "1347-1351年大瘟疫，歐洲死亡2500萬人。" },
+{ question: "文藝復興「米開朗基羅」雕塑《摩西》現藏？", options: ["羅馬聖彼得鎖鏈堂", "梵蒂岡", "佛羅倫斯", "巴黎"], answer: "羅馬聖彼得鎖鏈堂", explanation: "1513-1516年作品，為教皇尤里烏斯二世陵墓。" },
+{ question: "宗教改革「慈運理」陣亡於？", options: ["卡佩爾戰役", "維滕貝格", "日內瓦", "蘇黎世"], answer: "卡佩爾戰役", explanation: "1531年與天主教州戰爭中陣亡。" },
+{ question: "啟蒙運動「孟德斯鳩」著作？", options: ["論法的精神", "社會契約論", "老實人", "百科全書"], answer: "論法的精神", explanation: "1748年提出三權分立理論。" },
+{ question: "美國「富蘭克林」是？", options: ["外交家與科學家", "總統", "將軍", "哲學家"], answer: "外交家與科學家", explanation: "參與獨立宣言，發明避雷針。" },
+{ question: "法國大革命「馬拉」被刺殺於？", options: ["浴缸中", "斷頭台", "戰場", "議會"], answer: "浴缸中", explanation: "1793年夏綠蒂·科黛刺殺，結束其恐怖統治宣傳。" },
+{ question: "拿破崙「科西嘉」是？", options: ["出生地", "流放地", "戰場", "加冕地"], answer: "出生地", explanation: "1769年生於法屬科西嘉島。" },
+{ question: "英國「瓦特」改良？", options: ["蒸汽機", "紡紗機", "火車", "電燈"], answer: "蒸汽機", explanation: "1769年專利，推動工業革命。" },
+{ question: "19世紀「加里波底」率領？", options: ["紅衫軍", "黑衫軍", "藍衫軍", "白衫軍"], answer: "紅衫軍", explanation: "1860年征服南義大利。" },
+{ question: "一戰「法國」總統是？", options: ["普恩加萊", "克里蒙梭", "戴高樂", "密特朗"], answer: "普恩加萊", explanation: "戰時領導法國，後克里蒙梭任總理。" },
+{ question: "二戰「史達林」是？", options: ["蘇聯領導人", "德國領導人", "美國領導人", "英國領導人"], answer: "蘇聯領導人", explanation: "領導紅軍抵抗德國，戰後參與雅爾達會議。" },
+{ question: "冷戰「戈巴契夫」獲？", options: ["諾貝爾和平獎", "戰爭英雄", "經濟獎", "文學獎"], answer: "諾貝爾和平獎", explanation: "1990年因結束冷戰獲獎。" },
+{ question: "歐盟「法國與德國」是？", options: ["發起國", "脫歐國", "新加入", "反對國"], answer: "發起國", explanation: "1951年歐洲煤鋼共同體六國核心。" }
+                ];
+
+                const initializeQuiz = () => {
+                    let selected = shuffleArray(allQuestions).slice(0, 30);
+                    return selected.map(q => {
+                        return { ...q, options: shuffleArray(q.options) };
+                    });
+                };
+
+                const questions = ref(initializeQuiz());
+                const currentIndex = ref(0);
+                const correctCount = ref(0);
+                const combo = ref(0);
+                const maxCombo = ref(0);
+                const showFeedback = ref(false);
+                const selectedAnswer = ref(null);
+                const isFinished = ref(false);
+
+                const currentQuestion = computed(() => questions.value[currentIndex.value]);
+                const progress = computed(() => (currentIndex.value / questions.value.length) * 100);
+                const isLastQuestion = computed(() => currentIndex.value === questions.value.length - 1);
+
+                // 改為西方貴族與榮譽階級
+                const badge = computed(() => {
+                    const rate = correctCount.value / questions.value.length;
+                    if (rate === 1) return { icon: '👑', title: '傳奇帝王', desc: '君臨天下，歷史的車輪由你掌控！' };
+                    if (rate >= 0.9) return { icon: '🦁', title: '榮耀國王', desc: '雄才大略，你的統治將被永遠載入史冊。' };
+                    if (rate >= 0.8) return { icon: '🦅', title: '大公爵', desc: '權傾一方，學識與領地並重。' };
+                    if (rate >= 0.7) return { icon: '🛡️', title: '皇家騎士', desc: '衝鋒陷陣，你的英勇與智慧令人欽佩。' };
+                    if (rate >= 0.6) return { icon: '📜', title: '大學士', desc: '博覽群書，你是文藝復興的啟明星。' };
+                    if (rate >= 0.5) return { icon: '🕯️', title: '歷史學徒', desc: '初探歷史的殿堂，尚需在修道院中努力研讀。' };
+                    return { icon: '🌾', title: '帝國平民', desc: '歷史的旁觀者，建議多去圖書館讀點書再來。' };
+                });
+
+                const playSfx = (type) => {
+                    const soundUrls = {
+                        correct: 'https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3',
+                        combo: 'https://assets.mixkit.co/active_storage/sfx/1113/1113-preview.mp3'
+                    };
+                    if (!soundUrls[type]) return;
+                    const audio = new Audio(soundUrls[type]);
+                    audio.volume = 0.3;
+                    audio.play().catch(() => {});
+                };
+
+                const checkAnswer = (selectedText) => {
+                    if (showFeedback.value) return;
+                    selectedAnswer.value = selectedText;
+                    showFeedback.value = true;
+                    
+                    if (selectedText === currentQuestion.value.answer) {
+                        correctCount.value++;
+                        combo.value++;
+                        if (combo.value > maxCombo.value) maxCombo.value = combo.value;
+                        playSfx(combo.value >= 3 ? 'combo' : 'correct');
+                    } else {
+                        combo.value = 0;
+                    }
+                };
+
+                const nextQuestion = () => {
+                    if (isLastQuestion.value) {
+                        isFinished.value = true;
+                    } else {
+                        currentIndex.value++;
+                        showFeedback.value = false;
+                        selectedAnswer.value = null;
+                    }
+                };
+
+                const getOptionStyle = (optText) => {
+                    if (!showFeedback.value) return;
+                    // 答對改為綠色系，答錯改為紅/橘色系
+                    if (optText === currentQuestion.value.answer) return 'bg-emerald-50 border-emerald-500 text-emerald-700 ring-4 ring-emerald-100 scale-105';
+                    if (optText === selectedAnswer.value) return 'bg-red-50 border-red-500 text-red-700 shake-animation';
+                    return 'opacity-20 scale-95';
+                };
+
+                const getLetter = (idx) => ['A', 'B', 'C', 'D'][idx];
+                const restart = () => location.reload();
+
+                onMounted(() => {
+                    window.addEventListener('keydown', (e) => {
+                        const key = e.key.toUpperCase();
+                        const idx = ['A','B','C','D'].indexOf(key);
+                        if (idx !== -1 && !showFeedback.value && currentQuestion.value.options[idx]) {
+                            checkAnswer(currentQuestion.value.options[idx]);
+                        }
+                        if (e.key === 'Enter' && showFeedback.value) nextQuestion();
+                    });
+                });
+
+                return {
+                    questions, currentIndex, correctCount, combo, maxCombo, showFeedback, selectedAnswer, isFinished,
+                    currentQuestion, progress, isLastQuestion, badge,
+                    checkAnswer, nextQuestion, getOptionStyle, getLetter, restart
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
