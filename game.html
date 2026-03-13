@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>大清史事挑戰賽 - 修正版</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;900&family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root { --qing-red: #8b0000; --qing-gold: #d4af37; }
+        body { font-family: 'Noto Sans TC', sans-serif; background-color: #0f172a; color: white; }
+        .font-serif { font-family: 'Noto Serif TC', serif; }
+        
+        /* 修正：加入 pointer-events-none 防止背景攔截點擊 */
+        .bg-watermark {
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 20rem;
+            opacity: 0.03;
+            z-index: 0;
+            pointer-events: none; 
+            user-select: none;
+            animation: float 20s ease-in-out infinite;
+        }
+        @keyframes float {
+            0%, 100% { transform: translate(-50%, -52%) rotate(5deg); }
+            50% { transform: translate(-50%, -48%) rotate(-5deg); }
+        }
+
+        .btn-hover { transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); cursor: pointer; }
+        .btn-hover:hover:not(:disabled) { transform: translateY(-2px); filter: brightness(1.1); }
+        .btn-hover:active:not(:disabled) { transform: translateY(0) scale(0.98); }
+
+        .shake { animation: shake 0.4s both; }
+        @keyframes shake {
+            10%, 90% { transform: translateX(-1px); }
+            20%, 80% { transform: translateX(2px); }
+            30%, 50%, 70% { transform: translateX(-4px); }
+            40%, 60% { transform: translateX(4px); }
+        }
+
+        .score-popup {
+            position: absolute; top: -30px; right: 0;
+            animation: floatUp 0.8s ease-out forwards;
+            color: #fbbf24; font-weight: bold; font-size: 1.5rem;
+            pointer-events: none;
+        }
+        @keyframes floatUp {
+            0% { opacity: 0; transform: translateY(0); }
+            50% { opacity: 1; }
+            100% { opacity: 0; transform: translateY(-40px); }
+        }
+    </style>
+</head>
+<body class="min-h-screen overflow-x-hidden">
+    <div id="app" class="relative z-10 max-w-2xl mx-auto px-4 py-6">
+        <div class="bg-watermark font-serif">大清</div>
+
+        <transition mode="out-in" enter-active-class="animate__animated animate__fadeIn" leave-active-class="animate__animated animate__fadeOut">
+            
+            <div v-if="currentScreen === 'welcome'" key="welcome" class="text-center py-12">
+                <div class="animate__animated animate__zoomIn">
+                    <div class="inline-block p-6 bg-slate-800/50 rounded-full border-2 border-yellow-600/50 mb-8 shadow-2xl">
+                        <i data-lucide="scroll-text" class="w-16 h-16 text-yellow-500"></i>
+                    </div>
+                    <h1 class="text-5xl font-serif font-black text-yellow-500 mb-6 tracking-widest">清代史事挑戰賽</h1>
+                    <p class="text-slate-400 text-lg mb-12">驗證你的歷史造詣</p>
+                    
+                    <div class="flex flex-col gap-4 max-w-xs mx-auto">
+                        <button @click="startGame" class="btn-hover bg-red-800 py-4 rounded-2xl text-xl font-bold shadow-lg">開始作答</button>
+                        <button @click="currentScreen = 'settings'" class="btn-hover bg-slate-800 py-3 rounded-2xl flex items-center justify-center gap-2 border border-slate-700">
+                            <i data-lucide="settings" class="w-5 h-5"></i> 難度設定
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div v-else-if="currentScreen === 'game'" key="game" class="space-y-6">
+                <div class="flex justify-between items-center bg-slate-900/90 p-5 rounded-3xl border border-slate-700 shadow-xl">
+                    <div class="flex items-center gap-4">
+                        <span class="bg-yellow-600 px-3 py-1 rounded-lg text-xs font-black italic">No.{{ currentQuestionIndex + 1 }}</span>
+                        <div v-if="streak >= 2" class="flex items-center gap-1 text-orange-500 animate__animated animate__bounceIn">
+                            <i data-lucide="flame" class="w-5 h-5 fill-current"></i>
+                            <span class="font-black">x{{ streak }}</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-5">
+                        <div class="relative">
+                            <span class="text-2xl font-mono font-black text-yellow-500">{{ score }}</span>
+                            <div v-if="showScorePopup" class="score-popup">+{{ lastAddedScore }}</div>
+                        </div>
+                        <div :class="['font-mono text-3xl font-black transition-all w-12 text-center', timeLeft < 5 ? 'text-red-500 scale-110 animate-pulse' : 'text-slate-200']">
+                            {{ timeLeft }}
+                        </div>
+                    </div>
+                </div>
+
+                <div :class="['transition-all duration-300', { 'shake': isShake }]">
+                    <h2 class="text-2xl font-serif font-bold leading-relaxed mb-8 text-slate-100 px-2">
+                        {{ currentQuestion.question }}
+                    </h2>
+                    
+                    <div class="grid gap-3">
+                        <button v-for="(opt, idx) in currentQuestion.options" 
+                            @click="handleAnswer(idx)"
+                            :disabled="isAnswered"
+                            :class="[
+                                'btn-hover p-5 rounded-2xl border-2 text-left flex items-center gap-4 transition-all duration-300',
+                                getOptionClass(idx)
+                            ]">
+                            <span class="w-10 h-10 shrink-0 rounded-xl bg-slate-800 border border-slate-600 flex items-center justify-center font-black">{{ ['A','B','C','D'][idx] }}</span>
+                            <span class="text-lg">{{ opt }}</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div v-if="isAnswered" class="animate__animated animate__fadeInUp mt-6 pb-10 relative z-50">
+                    <div class="bg-slate-800/90 p-6 rounded-3xl border-l-8 border-yellow-600 mb-6 shadow-2xl">
+                        <div class="flex items-center gap-2 text-yellow-500 font-bold mb-3">
+                            <i data-lucide="book-open" class="w-4 h-4"></i>
+                            <span>歷史解析</span>
+                        </div>
+                        <p class="text-slate-300 leading-relaxed text-sm md:text-base">
+                            {{ currentQuestion.explanation }}
+                        </p>
+                    </div>
+                    
+                    <button @click.stop="goToNext" 
+                        class="btn-hover w-full bg-yellow-600 py-5 rounded-2xl font-black text-white flex items-center justify-center gap-3 shadow-[0_10px_30px_-10px_rgba(202,138,4,0.5)] text-lg relative z-50">
+                        {{ isLast ? '結算戰績' : '下一題' }} 
+                        <i data-lucide="arrow-right-circle" class="w-6 h-6"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div v-else-if="currentScreen === 'result'" key="result" class="text-center py-8">
+                <div class="animate__animated animate__bounceIn">
+                    <i data-lucide="award" class="w-24 h-24 mx-auto text-yellow-500 mb-6"></i>
+                    <h2 class="text-3xl font-serif font-black mb-2 uppercase tracking-widest">挑戰終了</h2>
+                    <div class="text-7xl font-mono font-black text-yellow-500 mb-10 drop-shadow-2xl">{{ score }}</div>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4 mb-10">
+                    <div class="bg-slate-800/80 p-6 rounded-3xl border border-slate-700 shadow-xl">
+                        <div class="text-slate-400 text-xs font-bold uppercase mb-2">正確率</div>
+                        <div class="text-3xl font-black text-white">{{ Math.round((correctCount/config.totalQuestions)*100) }}%</div>
+                    </div>
+                    <div class="bg-slate-800/80 p-6 rounded-3xl border border-slate-700 shadow-xl">
+                        <div class="text-slate-400 text-xs font-bold uppercase mb-2">最高連擊</div>
+                        <div class="text-3xl font-black text-orange-500">{{ maxStreak }}</div>
+                    </div>
+                </div>
+
+                <button @click="resetGame" class="btn-hover bg-red-900 w-full py-5 rounded-2xl font-black text-xl flex items-center justify-center gap-3 shadow-2xl">
+                    <i data-lucide="rotate-ccw"></i> 重啟挑戰
+                </button>
+            </div>
+        </transition>
+
+    </div>
+
+    <script>
+        const { createApp, ref, computed, onMounted, nextTick } = Vue;
+
+        createApp({
+            setup() {
+                const currentScreen = ref('welcome');
+                const config = ref({ totalQuestions: 10, timerSeconds: 15 });
+                const currentQuestionIndex = ref(0);
+                const score = ref(0);
+                const timeLeft = ref(0);
+                const isAnswered = ref(false);
+                const selectedOption = ref(null);
+                const streak = ref(0);
+                const maxStreak = ref(0);
+                const correctCount = ref(0);
+                const isShake = ref(false);
+                const showScorePopup = ref(false);
+                const lastAddedScore = ref(0);
+                let timerInterval = null;
+
+                const allQuestions = [
+                    { question: "1616年，是誰建立了「後金」政權，為清朝奠定基業？", options: ["努爾哈赤", "皇太極", "多爾袞", "順治帝"], answer: "A", explanation: "努爾哈赤統一女真各部，建立後金，創立八旗制度，是清朝的奠基者。" },
+                    { question: "雍正時期設立的哪一個機構，標誌著清代君主集權達到頂峰？", options: ["內閣", "中書省", "軍機處", "總理衙門"], answer: "C", explanation: "軍機處處於皇宮內廷，辦事高效且保密，使皇帝能直接掌握國家大權。" },
+                    { question: "哪位皇帝在位期間，清朝疆域達到最大（約1300萬平方公里）？", options: ["康熙帝", "雍正帝", "乾隆帝", "嘉慶帝"], answer: "C", explanation: "乾隆帝平定準噶爾及大小和卓後，確立了清朝廣闊的版圖。" },
+                    { question: "晚清時期，主張「自強」、「求富」的運動被稱為？", options: ["太平天國", "洋務運動", "維新運動", "辛亥革命"], answer: "B", explanation: "洋務運動引進西方技術與軍事，雖未成功改變體制，但開啟了中國近代化進程。" },
+                    { question: "1842年簽訂的中國近代史上第一個不平等條約是？", options: ["《南京條約》", "《北京條約》", "《馬關條約》", "《辛丑條約》"], answer: "A", explanation: "中英簽訂《南京條約》，規定割讓香港島並開放通商口岸。" },
+                    { question: "1895年甲午戰爭失敗後，清廷被迫將台灣割讓給哪個國家？", options: ["英國", "俄國", "日本", "法國"], answer: "C", explanation: "《馬關條約》簽訂後，台灣、澎湖被割讓給日本。" },
+                    { question: "1898年由光緒帝主導、卻因慈禧發動政變而失敗的改革是？", options: ["洋務運動", "百日維新", "清末新政", "辛亥革命"], answer: "B", explanation: "又稱戊戌變法，康有為、梁啟超等人試圖推行君主立憲。" },
+                    { question: "清末「扶清滅洋」是哪一個民間團體提出的口號？", options: ["太平天國", "義和團", "強學會", "興中會"], answer: "B", explanation: "義和團運動帶有強烈排外色彩，最終導致八國聯軍侵華。" },
+                    { question: "哪位將領在晚清收復了新疆，粉碎了阿古柏的入侵？", options: ["曾國藩", "左宗棠", "李鴻章", "張之洞"], answer: "B", explanation: "左宗棠抬棺出征，最終成功保衛了西北邊疆完整。" },
+                    { question: "清朝最後一任皇帝是誰？", options: ["宣統帝(溥儀)", "光緒帝", "同治帝", "咸豐帝"], answer: "A", explanation: "1912年溥儀頒布退位詔書，標誌著清朝與兩千多年帝制的終結。" }
+                ];
+
+                const gameQuestions = ref([]);
+                const currentQuestion = computed(() => gameQuestions.value[currentQuestionIndex.value] || {});
+                const isLast = computed(() => currentQuestionIndex.value === gameQuestions.value.length - 1);
+
+                const startGame = () => {
+                    gameQuestions.value = [...allQuestions].sort(() => Math.random() - 0.5).slice(0, config.value.totalQuestions);
+                    currentQuestionIndex.value = 0;
+                    score.value = 0;
+                    streak.value = 0;
+                    maxStreak.value = 0;
+                    correctCount.value = 0;
+                    currentScreen.value = 'game';
+                    startTimer();
+                };
+
+                const startTimer = () => {
+                    isAnswered.value = false;
+                    selectedOption.value = null;
+                    timeLeft.value = config.value.timerSeconds;
+                    if (timerInterval) clearInterval(timerInterval);
+                    timerInterval = setInterval(() => {
+                        if (timeLeft.value > 0) timeLeft.value--;
+                        else handleAnswer(null);
+                    }, 1000);
+                    nextTick(() => lucide.createIcons());
+                };
+
+                const handleAnswer = (idx) => {
+                    if (isAnswered.value) return;
+                    clearInterval(timerInterval);
+                    isAnswered.value = true;
+                    selectedOption.value = idx;
+
+                    const correctIdx = ['A','B','C','D'].indexOf(currentQuestion.value.answer);
+                    if (idx === correctIdx) {
+                        correctCount.value++;
+                        streak.value++;
+                        maxStreak.value = Math.max(maxStreak.value, streak.value);
+                        lastAddedScore.value = 100 + (timeLeft.value * 2) + (streak.value > 1 ? streak.value * 10 : 0);
+                        score.value += lastAddedScore.value;
+                        showScorePopup.value = true;
+                        setTimeout(() => showScorePopup.value = false, 800);
+                        playTone(880, 0.1);
+                    } else {
+                        streak.value = 0;
+                        isShake.value = true;
+                        setTimeout(() => isShake.value = false, 400);
+                        playTone(220, 0.2);
+                    }
+                    nextTick(() => lucide.createIcons());
+                };
+
+                const getOptionClass = (idx) => {
+                    if (!isAnswered.value) return 'border-slate-700 hover:border-yellow-500 bg-slate-800/40';
+                    const correctIdx = ['A','B','C','D'].indexOf(currentQuestion.value.answer);
+                    if (idx === correctIdx) return 'border-green-500 bg-green-500/20 text-green-400 font-bold';
+                    if (idx === selectedOption.value) return 'border-red-500 bg-red-500/20 text-red-400';
+                    return 'border-slate-800 opacity-30';
+                };
+
+                const goToNext = () => {
+                    console.log("Button clicked, isLast:", isLast.value); // 除錯用
+                    if (isLast.value) {
+                        currentScreen.value = 'result';
+                        confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+                    } else {
+                        currentQuestionIndex.value++;
+                        startTimer();
+                    }
+                };
+
+                const resetGame = () => {
+                    currentScreen.value = 'welcome';
+                    nextTick(() => lucide.createIcons());
+                };
+
+                const playTone = (freq, dur) => {
+                    try {
+                        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                        const osc = ctx.createOscillator();
+                        const g = ctx.createGain();
+                        osc.connect(g); g.connect(ctx.destination);
+                        osc.frequency.value = freq;
+                        g.gain.setValueAtTime(0.1, ctx.currentTime);
+                        g.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + dur);
+                        osc.start(); osc.stop(ctx.currentTime + dur);
+                    } catch(e) {}
+                };
+
+                onMounted(() => lucide.createIcons());
+
+                return {
+                    currentScreen, config, currentQuestion, currentQuestionIndex, score, timeLeft, 
+                    isAnswered, selectedOption, streak, maxStreak, correctCount, isLast,
+                    isShake, showScorePopup, lastAddedScore,
+                    startGame, handleAnswer, getOptionClass, goToNext, resetGame
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
