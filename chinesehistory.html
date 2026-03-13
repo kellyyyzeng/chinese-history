@@ -106,8 +106,6 @@
                 </div>
 
                 <div :class="['bg-white quiz-card p-9 md:p-14 mb-8', feedbackClass]">
-                    <div class="absolute -top-3 -left-3 text-4xl opacity-10">📜</div>
-                    <div class="absolute -bottom-3 -right-3 text-4xl opacity-10">📜</div>
                     <h2 class="text-2xl md:text-3xl font-bold text-gray-900 leading-snug relative z-10">
                         {{ currentQuestion.question }}
                     </h2>
@@ -223,7 +221,7 @@
                         correct: 'https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3',
                         combo: 'https://assets.mixkit.co/active_storage/sfx/1113/1113-preview.mp3'
                     };
-                    if (!soundUrls[type]) return; // 答錯不播放音效
+                    if (!soundUrls[type]) return;
                     const audio = new Audio(soundUrls[type]);
                     audio.volume = 0.3;
                     audio.play().catch(() => {});
@@ -241,7 +239,6 @@
                         playSfx(combo.value >= 3 ? 'combo' : 'correct');
                     } else {
                         combo.value = 0;
-                        // 答錯僅視覺回饋，不播放音效
                     }
                 };
 
