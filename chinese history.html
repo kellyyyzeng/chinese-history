@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏮 中國歷史文化問答</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@900&family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root { --primary-red: #B91C1C; --gold-dark: #B45309; --bg-paper: #FDF8F1; }
+        body { font-family: 'Noto Sans TC', sans-serif; background-color: var(--bg-paper); overflow-x: hidden; position: relative; }
+
+        /* 🟢 文化元素背景層設計 🟢 */
+        
+        /* 1. 底層：宣紙紋理與極淡的文化圖騰（迴紋） */
+        .bg-pattern-overlay {
+            position: fixed; inset: 0;
+            background-image: url('https://www.transparenttextures.com/patterns/60-lines.png'); /* 模擬宣紙纖維 */
+            opacity: 0.3; z-index: -3;
+        }
+
+        /* 2. 中層：浮水印視覺元素（山水、祥雲） */
+        .bg-culture-visuals {
+            position: fixed; inset: 0; z-index: -2; pointer-events: none;
+            background-image: 
+                /* 底部水墨山水遠景 - 淡灰色 */
+                url('https://cdn.pixabay.com/photo/2021/11/12/13/28/mountain-6789111_1280.png'),
+                /* 頂部祥雲 - 淡硃砂色 */
+                url('https://cdn.pixabay.com/photo/2016/09/27/09/06/cloud-1698018_1280.png');
+            background-position: bottom center, top center;
+            background-repeat: no-repeat, repeat-x;
+            background-size: 100% auto, 300px auto;
+            opacity: 0.06; /* 關鍵：保持極低透明度，不干擾閱讀 */
+            filter: grayscale(100%); /* 統一成水墨色調 */
+        }
+
+        /* 3. 頂層裝飾：動態飄移的窗欞光影 */
+        .bg-deco-light {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0) 100%);
+            transform: skewX(-20deg) translateX(-100%);
+            animation: light-drift 15s linear infinite;
+            z-index: -1; pointer-events: none;
+        }
+
+        @keyframes light-drift { from { transform: skewX(-20deg) translateX(-100%); } to { transform: skewX(-20deg) translateX(200%); } }
+
+        /* UI 元件樣式 */
+        .chinese-font { font-family: 'Noto Serif TC', serif; }
+        .quiz-card { 
+            border-top: 14px solid var(--primary-red); 
+            border-bottom: 4px solid #E5E7EB;
+            box-shadow: 0 25px 50px -12px rgba(185, 28, 28, 0.1); 
+            border-radius: 2rem;
+            position: relative;
+        }
+        /* 選項按鈕的復古風優化 */
+        .option-btn {
+            background: #FFFFFF; border: 2px solid #E5E7EB; color: #374151;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .option-btn:not(:disabled):hover {
+            border-color: var(--primary-red); background-color: #FFF1F1; transform: translateY(-3px);
+            box-shadow: 0 10px 15px -3px rgba(185, 28, 28, 0.1);
+        }
+
+        /* 進度條古典配色 */
+        .progress-bar { background: linear-gradient(90deg, #B91C1C 0%, #F59E0B 100%); }
+
+        /* Combo 動畫強化 */
+        .combo-pop { animation: combo-bounce 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes combo-bounce { 0% { transform: scale(0); opacity: 0; } 50% { transform: scale(1.3) rotate(-5deg); } 100% { transform: scale(1) rotate(0); opacity: 1; } }
+        
+        /* 答錯震動回饋 */
+        .shake-animation { animation: shake 0.4s ease-in-out; }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <div class="bg-pattern-overlay"></div>
+    <div class="bg-culture-visuals"></div>
+    <div class="bg-deco-light"></div>
+
+    <div id="app" class="w-full max-w-2xl relative z-10">
+        
+        <div v-if="!isFinished" class="fixed top-6 left-6 z-50">
+            <div class="bg-white/95 backdrop-blur shadow-xl rounded-2xl border-l-8 border-red-700 p-4 min-w-[150px]">
+                <p class="text-[10px] text-red-900/60 font-bold uppercase tracking-wider chinese-font">歷史名冊</p>
+                <p class="text-xl font-black text-gray-800">
+                    <span class="text-red-700">已對 {{ correctCount }}</span> 
+                    <span class="text-gray-300 mx-1">/</span> 
+                    <span class="text-sm">總 {{ questions.length }} 題</span>
+                </p>
+            </div>
+        </div>
+
+        <div v-if="!isFinished" class="fixed top-6 right-6 z-50 flex flex-col items-end gap-3">
+            <transition name="fade">
+                <div v-if="combo > 1" class="combo-pop bg-orange-600 text-white px-5 py-2 rounded-full shadow-2xl border-2 border-yellow-200">
+                    <p class="text-2xl font-black italic leading-none chinese-font">x{{ combo }} 連擊</p>
+                </div>
+            </transition>
+            <div class="bg-red-800 text-white p-4 rounded-2xl shadow-2xl text-right min-w-[110px] border-b-4 border-red-950">
+                <p class="text-[10px] opacity-70 font-bold chinese-font">當前積分</p>
+                <p class="text-4xl font-black font-mono leading-none">{{ score }}</p>
+            </div>
+        </div>
+
+        <transition name="fade" mode="out-in">
+            <div v-if="!isFinished" key="quiz">
+                <div class="mb-10 pt-16 md:pt-0 text-center md:text-left">
+                    <h1 class="text-4xl font-black text-red-950 chinese-font flex items-center gap-3 justify-center md:justify-start">
+                        <span class="text-5xl opacity-80">🏮</span> 中國歷史文化問答
+                    </h1>
+                    <div class="w-full h-2.5 bg-red-950/10 rounded-full mt-5 overflow-hidden shadow-inner">
+                        <div class="progress-bar h-full transition-all duration-700 rounded-full" :style="{ width: progress + '%' }"></div>
+                    </div>
+                </div>
+
+                <div :class="['bg-white quiz-card p-9 md:p-14 mb-8', feedbackClass]">
+                    <div class="absolute -top-3 -left-3 text-4xl opacity-10">📜</div>
+                    <div class="absolute -bottom-3 -right-3 text-4xl opacity-10">📜</div>
+                    <h2 class="text-2xl md:text-3xl font-bold text-gray-900 leading-snug relative z-10">
+                        {{ currentQuestion.question }}
+                    </h2>
+                </div>
+
+                <div class="grid gap-4 mb-8">
+                    <button 
+                        v-for="(opt, idx) in currentQuestion.options" 
+                        :key="idx"
+                        @click="checkAnswer(getLetter(idx))"
+                        :disabled="showFeedback"
+                        :class="[
+                            'w-full p-6 text-left text-xl rounded-2xl flex justify-between items-center font-bold option-btn shadow',
+                            getOptionStyle(getLetter(idx))
+                        ]"
+                    >
+                        <span><span class="mr-5 text-gray-300 font-mono text-sm">{{ getLetter(idx) }}</span> {{ opt }}</span>
+                        <span v-if="showFeedback && getLetter(idx) === currentQuestion.answer" class="text-2xl">🏮</span>
+                    </button>
+                </div>
+
+                <div v-if="showFeedback" class="mt-8 p-8 bg-white/95 border-2 border-orange-400 rounded-3xl shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-400">
+                    <p class="font-black text-orange-950 text-xl mb-3 chinese-font flex items-center gap-2">💡 <span class="border-b-2 border-orange-200">歷史錦囊</span></p>
+                    <p class="text-gray-800 leading-relaxed text-lg mb-8">{{ currentQuestion.explanation }}</p>
+                    <button @click="nextQuestion" class="w-full bg-red-700 text-white py-6 rounded-2xl text-2xl font-black shadow-[0_8px_0_0_#991b1b] active:shadow-none active:translate-y-2 transition-all">
+                        {{ isLastQuestion ? '查看文化成就' : '下一關 (Enter)' }}
+                    </button>
+                </div>
+            </div>
+
+            <div v-else key="result" class="text-center bg-white rounded-[3rem] shadow-2xl p-14 quiz-card border-b-0 border-t-[16px]">
+                <div class="text-9xl mb-8 drop-shadow-lg">{{ badge.icon }}</div>
+                <h2 class="text-6xl font-black text-red-900 mb-3 chinese-font">{{ badge.title }}</h2>
+                <p class="text-2xl text-gray-600 mb-12 italic">「{{ badge.desc }}」</p>
+
+                <div class="grid grid-cols-2 gap-6 mb-12">
+                    <div class="bg-red-50 p-8 rounded-3xl border border-red-100">
+                        <p class="text-sm text-red-400 font-bold uppercase chinese-font">名冊答對數</p>
+                        <p class="text-6xl font-black text-red-700 font-mono">{{ correctCount }}</p>
+                    </div>
+                    <div class="bg-orange-50 p-8 rounded-3xl border border-orange-100">
+                        <p class="text-sm text-orange-400 font-bold uppercase chinese-font">巔峰連擊</p>
+                        <p class="text-6xl font-black text-orange-600 font-mono">{{ maxCombo }}</p>
+                    </div>
+                </div>
+
+                <button @click="restart" class="w-full bg-red-700 text-white py-6 rounded-3xl text-3xl font-black shadow-2xl hover:bg-red-800 transition-all active:scale-95">
+                    重新登基挑戰
+                </button>
+            </div>
+        </transition>
+    </div>
+
+    <script>
+        const { createApp, ref, computed, onMounted } = Vue;
+
+        createApp({
+            setup() {
+                // 題庫數據 (請沿用之前的30題，此處為縮減版以利展示)
+                const questions = [
+                    { id: 1, question: "孔子是哪一家思想的創始人？", options: ["道家", "儒家", "墨家", "法家"], answer: "B", explanation: "孔子創立儒家，教導仁愛和禮儀。" },
+                    { id: 2, question: "《論語》記錄的是誰的言行？", options: ["老子", "孔子", "孟子", "韓非"], answer: "B", explanation: "這是孔子的學生及其再傳弟子記錄孔子言論的經典。" },
+                    { id: 3, question: "老子寫的著名書叫什麼？", options: ["《論語》", "《道德經》", "《孫子兵法》", "《詩經》"], answer: "B", explanation: "老子是道家創始人，《道德經》核心思想是「道法自然」。" },
+                    { id: 4, question: "秦始皇叫什麼名字？", options: ["嬴政", "劉邦", "項羽", "李世民"], answer: "A", explanation: "秦始皇嬴政統一了六國，建立了中國第一個大一統王朝。" },
+                    { id: 5, question: "秦朝統一後使用的貨幣叫什麼？", options: ["交子", "秦半兩", "五銖錢", "銀錠"], answer: "B", explanation: "秦始皇統一貨幣，規定全國通用圓形方孔的「半兩」錢。" },
+                    { id: 6, question: "秦朝修築來抵禦北方民族的建築是？", options: ["故宮", "長城", "天壇", "頤和園"], answer: "B", explanation: "長城主要為了防禦北方的匈奴侵擾。" },
+                    { id: 7, question: "西漢的開國皇帝是誰？", options: ["漢武帝", "漢高祖劉邦", "漢明帝", "漢光武帝"], answer: "B", explanation: "劉邦在楚漢戰爭中勝出，建立漢朝。" },
+                    { id: 8, question: "絲綢之路是誰開闢的（出使西域）？", options: ["張騫", "班超", "衛青", "霍去病"], answer: "A", explanation: "張騫出使西域，促進了東西方的經濟與文化交流。" },
+                    { id: 9, question: "三國時期，「桃園三結義」是指哪三個人？", options: ["曹操、劉備、孫權", "劉備、關羽、張飛", "諸葛亮、周瑜、司馬懿", "趙雲、馬超、黃忠"], answer: "B", explanation: "這是《三國演義》中家喻曉的故事，象徵忠義。" },
+                    { id: 10, question: "唐朝最著名的女皇帝是誰？", options: ["慈禧", "武則天", "王昭君", "楊貴妃"], answer: "B", explanation: "武則天是中國歷史上唯一得到普遍承認的女皇帝。" },
+                    { id: 11, question: "「唐詩三百首」中被稱為「詩仙」的是？", options: ["杜甫", "白居易", "李白", "王維"], answer: "C", explanation: "李白詩風豪放，想像豐富，被後人譽為「詩仙」。" },
+                    { id: 12, question: "北宋發明的、用於導航的工具是？", options: ["火藥", "指南針", "造紙術", "印刷術"], answer: "B", explanation: "指南針在宋代開始大量應用於航海。" },
+                    { id: 13, question: "成吉思汗是哪個民族的首領？", options: ["藏族", "蒙古族", "滿族", "回族"], answer: "B", explanation: "成吉思汗統一蒙古各部，建立大蒙古國。" },
+                    { id: 14, question: "明朝修築的著名宮殿群叫什麼？", options: ["白宮", "故宮（紫禁城）", "凡爾賽宮", "布達拉宮"], answer: "B", explanation: "北京故宮是明清兩代的皇宮。" },
+                    { id: 15, question: "鄭和下西洋最遠到達了哪裡？", options: ["非洲東海岸和紅海沿岸", "歐洲", "美洲", "澳洲"], answer: "A", explanation: "鄭和七下西洋，加強了中國與亞非各國的聯繫。" },
+                    { id: 16, question: "清朝最後一個皇帝是誰？", options: ["康熙", "乾隆", "溥儀", "光緒"], answer: "C", explanation: "溥儀是清朝及中國封建王朝的最後一位皇帝。" },
+                    { id: 17, question: "中國四大發明不包括哪一項？", options: ["造紙術", "火藥", "印刷術", "電燈"], answer: "D", explanation: "四大發明是造紙術、指南針、火藥和印刷術。" },
+                    { id: 18, question: "戰國時期主張「兼愛、非攻」的思想家是？", options: ["墨子", "莊子", "荀子", "韓非子"], answer: "A", explanation: "墨子創立墨家，反對不義戰爭。" },
+                    { id: 19, question: "「草船借箭」的故事與誰有關？", options: ["劉備", "諸葛亮", "孫權", "關羽"], answer: "B", explanation: "諸葛亮利用大霧天氣，向曹操「借」了十萬餘支箭。" },
+                    { id: 20, question: "《三國演義》中，「空城計」的主角是？", options: ["司馬懿", "曹操", "諸葛亮", "周瑜"], answer: "C", explanation: "諸葛亮在西城大開城門，嚇退司馬懿大軍。" },
+                    { id: 21, question: "唐代被稱為「詩聖」的詩人是？", options: ["李白", "杜甫", "杜牧", "李商隱"], answer: "B", explanation: "杜甫的詩反映社會現實，被稱為「詩史」。" },
+                    { id: 22, question: "宋代哪位將領曾立志「精忠報國」？", options: ["岳飛", "文天祥", "陸秀夫", "戚繼光"], answer: "A", explanation: "岳飛是南宋著名的抗金將領。" },
+                    { id: 23, question: "元朝是由哪個民族建立的？", options: ["漢族", "蒙古族", "契丹族", "女真族"], answer: "B", explanation: "忽必烈建立元朝，是第一個由少數民族建立的大一統王朝。" },
+                    { id: 24, question: "明朝寫《本草綱目》的醫學家是？", options: ["華佗", "扁鵲", "李時珍", "孫思邈"], answer: "C", explanation: "《本草綱目》被譽為「東方藥學巨典」。" },
+                    { id: 25, question: "清朝在哪場戰爭後簽訂了《南京條約》？", options: ["甲午戰爭", "鴉片戰爭", "中法戰爭", "八國聯軍侵華"], answer: "B", explanation: "1842年簽訂的《南京條約》是中國近代史上第一個不平等條約。" },
+                    { id: 26, question: "中秋節傳統上會吃什麼食物？", options: ["粽子", "月餅", "餃子", "湯圓"], answer: "B", explanation: "中秋節合家團圓，吃月餅象徵圓滿。" },
+                    { id: 27, question: "端午節是為了紀念哪位歷史人物？", options: ["屈原", "伍子胥", "曹操", "劉邦"], answer: "A", explanation: "端午節賽龍舟、吃粽子是為了紀念戰國時期的楚國詩人屈原。" },
+                    { id: 28, question: "中國傳統建築中，屋頂上的小獸主要作用是？", options: ["純裝飾", "通風", "裝飾與祈求平安", "照明"], answer: "C", explanation: "宮殿屋脊上的「脊獸」有嚴格等級劃分，也有防火避災的寓意。" },
+                    { id: 29, question: "文房四寶是指筆、墨、紙和什麼？", options: ["書", "硯", "琴", "畫"], answer: "B", explanation: "筆、墨、紙、硯是中國傳統書寫繪畫的工具。" },
+                    { id: 30, question: "「學而時習之，不亦說乎」出自哪本書？", options: ["《論語》", "《孟子》", "《大學》", "《中庸》"], answer: "A", explanation: "這是《論語》開篇的第一句話，強調學習的快樂。" }
+                ];
+
+                const currentIndex = ref(0);
+                const score = ref(0);
+                const correctCount = ref(0);
+                const combo = ref(0);
+                const maxCombo = ref(0);
+                const showFeedback = ref(false);
+                const selectedAnswer = ref(null);
+                const isFinished = ref(false);
+
+                const currentQuestion = computed(() => questions[currentIndex.value]);
+                const progress = computed(() => (currentIndex.value / questions.length) * 100);
+                const isLastQuestion = computed(() => currentIndex.value === questions.length - 1);
+
+                const badge = computed(() => {
+                    const rate = correctCount.value / questions.length;
+                    if (rate === 1) return { icon: '🐲', title: '千古一帝', desc: '博古通今，震古爍今！' };
+                    if (rate >= 0.8) return { icon: '🎓', title: '內閣大學士', desc: '才高八斗，朝廷重臣。' };
+                    return { icon: '🖋️', title: '寒窗學子', desc: '書山有路勤為徑。' };
+                });
+
+                const playSfx = (type) => {
+                    const sounds = {
+                        correct: 'https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3',
+                        combo: 'https://assets.mixkit.co/active_storage/sfx/1113/1113-preview.mp3'
+                    };
+                    if (!sounds[type]) return;
+                    const audio = new Audio(sounds[type]);
+                    audio.volume = 0.2; // 調低音效量，專注文化氛圍
+                    audio.play().catch(() => {});
+                };
+
+                const checkAnswer = (letter) => {
+                    if (showFeedback.value) return;
+                    selectedAnswer.value = letter;
+                    showFeedback.value = true;
+                    
+                    if (letter === currentQuestion.value.answer) {
+                        correctCount.value++;
+                        combo.value++;
+                        if (combo.value > maxCombo.value) maxCombo.value = combo.value;
+                        score.value += 10 + (combo.value * 2);
+                        playSfx(combo.value >= 3 ? 'combo' : 'correct');
+                    } else {
+                        combo.value = 0;
+                    }
+                };
+
+                const nextQuestion = () => {
+                    if (isLastQuestion.value) isFinished.value = true;
+                    else {
+                        currentIndex.value++;
+                        showFeedback.value = false;
+                        selectedAnswer.value = null;
+                    }
+                };
+
+                const getOptionStyle = (letter) => {
+                    if (!showFeedback.value) return; // 使用 option-btn class
+                    if (letter === currentQuestion.value.answer) return 'bg-green-50 border-green-500 text-green-700 ring-4 ring-green-100 scale-105';
+                    if (letter === selectedAnswer.value) return 'bg-red-50 border-red-500 text-red-700 shake-animation';
+                    return 'opacity-20 scale-95';
+                };
+
+                const getLetter = (idx) => ['A', 'B', 'C', 'D'][idx];
+                const restart = () => location.reload();
+
+                onMounted(() => {
+                    window.addEventListener('keydown', (e) => {
+                        const key = e.key.toUpperCase();
+                        if (['A','B','C','D'].includes(key)) checkAnswer(key);
+                        if (e.key === 'Enter' && showFeedback.value) nextQuestion();
+                    });
+                });
+
+                return {
+                    questions, currentIndex, score, correctCount, combo, maxCombo, showFeedback, selectedAnswer, isFinished,
+                    currentQuestion, progress, isLastQuestion, badge,
+                    checkAnswer, nextQuestion, getOptionStyle, getLetter, restart
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
