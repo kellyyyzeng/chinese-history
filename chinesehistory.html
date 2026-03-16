@@ -182,91 +182,63 @@
 
         createApp({
             setup() {
+                // 擴充至 50 題的題庫
                 const allQuestions = [
-    { question: "孔子是哪一家思想的創始人？", options: ["道家", "儒家", "墨家", "法家"], answer: "儒家", explanation: "孔子創立儒家，教導仁愛和禮儀。" },
-    { question: "《論語》記錄的是誰的言行？", options: ["老子", "孔子", "孟子", "韓非"], answer: "孔子", explanation: "這是孔子的學生及其再傳弟子記錄孔子言論的經典。" },
-    { question: "老子寫的著名書叫什麼？", options: ["《論語》", "《道德經》", "《孫子兵法》", "《詩經》"], answer: "《道德經》", explanation: "老子是道家創始人，《道德經》核心思想是「道法自然」。" },
-    { question: "秦始皇叫什麼名字？", options: ["嬴政", "劉邦", "項羽", "李世民"], answer: "嬴政", explanation: "秦始皇嬴政統一了六國，建立了中國第一個大一統王朝。" },
-    { question: "秦朝統一後使用的貨幣叫什麼？", options: ["交子", "秦半兩", "五銖錢", "銀錠"], answer: "秦半兩", explanation: "秦始皇統一貨幣，規定全國通用圓形方孔的「半兩」錢。" },
-    { question: "秦朝修築來抵禦北方民族的建築是？", options: ["故宮", "長城", "天壇", "頤和園"], answer: "長城", explanation: "長城主要為了防禦北方的匈奴侵擾。" },
-    { question: "西漢的開國皇帝是誰？", options: ["漢武帝", "漢高祖劉邦", "漢明帝", "漢光武帝"], answer: "漢高祖劉邦", explanation: "劉邦在楚漢戰爭中勝出，建立漢朝。" },
-    { question: "絲綢之路是誰開闢的（出使西域）？", options: ["張騫", "班超", "衛青", "霍去病"], answer: "張騫", explanation: "張騫出使西域，促進了東西方的經濟與文化交流。" },
-    { question: "三國時期，「桃園三結義」是指哪三個人？", options: ["曹操、劉備、孫權", "劉備、關羽、張飛", "諸葛亮、周瑜、司馬懿", "趙雲、馬超、黃忠"], answer: "劉備、關羽、張飛", explanation: "這是《三國演義》中家喻戶曉的故事，象徵忠義。" },
-    { question: "唐朝最著名的女皇帝是誰？", options: ["慈禧", "武則天", "王昭君", "楊貴妃"], answer: "武則天", explanation: "武則天是中國歷史上唯一得到普遍承認的女皇帝。" },
-    { question: "「唐詩三百首」中被稱為「詩仙」的是？", options: ["杜甫", "白居易", "李白", "王維"], answer: "李白", explanation: "李白詩風豪放，想像豐富，被後人譽為「詩仙」。" },
-    { question: "北宋發明的、用於導航的工具是？", options: ["火藥", "指南針", "造紙術", "印刷術"], answer: "指南針", explanation: "指南針在宋代開始大量應用於航海。" },
-    { question: "成吉思汗是哪個民族的首領？", options: ["藏族", "蒙古族", "滿族", "回族"], answer: "蒙古族", explanation: "成吉思汗統一蒙古各部，建立大蒙古國。" },
-    { question: "明朝修築的著名宮殿群叫什麼？", options: ["白宮", "故宮（紫禁城）", "凡爾賽宮", "布達拉宮"], answer: "故宮（紫禁城）", explanation: "北京故宮是明清兩代的皇宮。" },
-    { question: "鄭和下西洋最遠到達了哪裡？", options: ["非洲東海岸和紅海沿岸", "歐洲", "美洲", "澳洲"], answer: "非洲東海岸和紅海沿岸", explanation: "鄭和七下西洋，加強了中國與亞非各國的聯繫。" },
-    { question: "清朝最後一個皇帝是誰？", options: ["康熙", "乾隆", "溥儀", "光緒"], answer: "溥儀", explanation: "溥儀是清朝及中國封建王朝的最後一位皇帝。" },
-    { question: "中國四大發明不包括哪一項？", options: ["造紙術", "火藥", "印刷術", "電燈"], answer: "電燈", explanation: "四大發明是造紙術、指南針、火藥和印刷術。" },
-    { question: "戰國時期主張「兼愛、非攻」的思想家是？", options: ["墨子", "莊子", "荀子", "韓非子"], answer: "墨子", explanation: "墨子創立墨家，反對不義戰爭。" },
-    { question: "「草船借箭」的故事與誰有關？", options: ["劉備", "諸葛亮", "孫權", "關羽"], answer: "諸葛亮", explanation: "諸葛亮利用大霧天氣，向曹操「借」了十萬餘支箭。" },
-    { question: "《三國演義》中，「空城計」的主角是？", options: ["司馬懿", "曹操", "諸葛亮", "周瑜"], answer: "諸葛亮", explanation: "諸葛亮在西城大開城門，嚇退司馬懿大軍。" },
-    { question: "唐代稱為「詩聖」的詩人是？", options: ["李白", "杜甫", "杜牧", "李商隱"], answer: "杜甫", explanation: "杜甫的詩反映社會現實，被稱為「詩史」。" },
-    { question: "宋代哪位將領曾立志「精忠報國」？", options: ["岳飛", "文天祥", "陸秀夫", "戚繼光"], answer: "岳飛", explanation: "岳飛是南宋著名的抗金將領。" },
-    { question: "元朝是由哪個民族建立的？", options: ["漢族", "蒙古族", "契丹族", "女真族"], answer: "蒙古族", explanation: "忽必烈建立元朝，是第一個由少數民族建立的大一統王朝。" },
-    { question: "明朝寫《本草綱目》的醫學家是？", options: ["華佗", "扁鵲", "李時珍", "孫思邈"], answer: "李時珍", explanation: "《本草綱目》被譽為「東方藥學巨典」。" },
-    { question: "清朝在哪場戰爭後簽訂了《南京條約》？", options: ["甲午戰爭", "鴉片戰爭", "中法戰爭", "八國聯軍侵華"], answer: "鴉片戰爭", explanation: "1842年簽訂的《南京條約》是中國近代史上第一個不平等條約。" },
-    { question: "中秋節傳統上會吃什麼食物？", options: ["粽子", "月餅", "餃子", "湯圓"], answer: "月餅", explanation: "中秋節合家團圓，吃月餅象徵圓滿。" },
-    { question: "端午節是為了紀念哪位歷史人物？", options: ["屈原", "伍子胥", "曹操", "劉邦"], answer: "屈原", explanation: "端午節賽龍舟、吃粽子是為了紀念戰國時期的楚國詩人屈原。" },
-    { question: "中國傳統建築中，屋頂上的小獸主要作用是？", options: ["純裝飾", "通風", "裝飾與祈求平安", "照明"], answer: "裝飾與祈求平安", explanation: "宮殿屋脊上的「脊獸」有嚴格等級劃分，也有防火避災的寓意。" },
-    { question: "文房四寶是指筆、墨、紙和什麼？", options: ["書", "硯", "琴", "畫"], answer: "硯", explanation: "筆、墨、紙、硯是中國傳統書寫繪畫的工具。" },
-    { question: "「學而時習之，不亦說乎」出自哪本書？", options: ["《論語》", "《大學》", "《中庸》", "《孟子》"], answer: "《論語》", explanation: "這是《論語》開篇的第一句話，強調學習的快樂。" },
-    { question: "被尊稱為「書聖」的晉代書法家是誰？", options: ["顏真卿", "柳公權", "王羲之", "蘇軾"], answer: "王羲之", explanation: "王羲之的代表作《蘭亭集序》被譽為「天下第一行書」。" },
-    { question: "「破釜沉舟」這個成語與哪位歷史人物有關？", options: ["韓信", "項羽", "劉邦", "岳飛"], answer: "項羽", explanation: "巨鹿之戰中，項羽命令軍隊打破煮飯的鍋，鑿沉渡河的船，以示決死一戰。" },
-    { question: "北宋時期著名的變法運動是誰主導的？", options: ["商鞅", "王安石", "張居正", "康有為"], answer: "王安石", explanation: "王安石變法旨在富國強兵，但最終因保守派反對而失敗。" },
-    { question: "明代鄭和下西洋的船隊出發港口主要在哪個省份？", options: ["廣東", "福建", "江蘇", "浙江"], answer: "江蘇", explanation: "鄭和船隊主要從江蘇太倉的劉家港出發。" },
-    { question: "清代被譽為中國古典小說巔峰之作的是？", options: ["《西遊記》", "《水滸傳》", "《三國演義》", "《紅樓夢》"], answer: "《紅樓夢》", explanation: "曹雪芹的《紅樓夢》深刻描繪了封建社會的衰亡。" },
-    { question: "「靖康之恥」導致了哪個朝代的滅亡？", options: ["西晉", "唐朝", "北宋", "明朝"], answer: "北宋", explanation: "金軍攻破汴京，俘虜宋徽宗、宋欽宗，北宋滅亡。" },
-    { question: "中國古代科舉制度是在哪個朝代正式確立的？", options: ["漢朝", "隋朝", "唐朝", "宋朝"], answer: "隋朝", explanation: "隋煬帝設立進士科，標誌著科舉制度的正式誕生。" },
-    { question: "唐代文成公主入藏，嫁給了哪位吐蕃贊普？", options: ["松贊干布", "赤德祖贊", "尺帶珠丹", "達延莽布支"], answer: "松贊干布", explanation: "文成公主入藏促進了唐朝與吐蕃的經濟文化交流。" },
-    { question: "「四面楚歌」的故事發生在哪場戰役中？", options: ["赤壁之戰", "官渡之戰", "垓下之戰", "淝水之戰"], answer: "垓下之戰", explanation: "劉邦軍隊在垓下包圍項羽，並唱起楚地民歌，瓦解楚軍鬥志。" },
-    { question: "「杯酒釋兵權」是哪位皇帝鞏固皇權的舉措？", options: ["漢高祖", "唐太宗", "宋太祖", "明太祖"], answer: "宋太祖", explanation: "趙匡胤通過宴請將領，和平解除了他們的兵權。" },
-    { question: "中國古代被稱為「醫聖」的東漢醫學家是？", options: ["華佗", "張仲景", "孫思邈", "李時珍"], answer: "張仲景", explanation: "張仲景著有《傷寒雜病論》，奠定了中醫辨證論治的基礎。" },
-    { question: "「司馬昭之心，路人皆知」這句成語出自哪個歷史時期？", options: ["春秋戰國", "楚漢相爭", "三國時期", "南北朝"], answer: "三國時期", explanation: "司馬昭圖謀篡奪曹魏政權的野心，當時的人都知道。" },
-    { question: "清朝設立以加強君主專制、處理軍國大事的機構是？", options: ["內閣", "尚書省", "軍機處", "樞密院"], answer: "軍機處", explanation: "雍正帝設立軍機處，使君主專制達到頂峰。" },
-    { question: "「安史之亂」是由哪兩位將領發動的？", options: ["安祿山、史思明", "安祿山、郭子儀", "史思明、李光弼", "郭子儀、李光弼"], answer: "安祿山、史思明", explanation: "安史之亂是唐朝由盛轉衰的轉折點。" },
-    { question: "世界上現存最古老的石拱橋「趙州橋」建於哪個朝代？", options: ["秦朝", "漢朝", "隋朝", "宋朝"], answer: "隋朝", explanation: "趙州橋由隋朝工匠李春設計建造。" },
-    { question: "主張「性惡論」的先秦儒家代表人物是？", options: ["孔子", "孟子", "荀子", "董仲舒"], answer: "荀子", explanation: "荀子主張人性本惡，需要通過後天學習和禮儀來教化。" },
-    { question: "「臥薪嘗膽」的故事主角是春秋時期的哪位國君？", options: ["齊桓公", "晉文公", "楚莊王", "越王勾踐"], answer: "越王勾踐", explanation: "勾踐戰敗後刻苦自勵，最終滅掉吳國雪恥。" },
-    { question: "夏朝的建立者是誰？", options: ["堯", "舜", "禹", "啟"], answer: "啟", explanation: "禹的兒子啟開創了世襲制，建立中國第一個王朝夏朝。" },
-    { question: "商朝的文字主要刻在什麼上面？", options: ["竹簡", "甲骨", "青銅器", "絲帛"], answer: "甲骨", explanation: "商朝的甲骨文是中國已知最早的系統文字。" },
-    { question: "周武王滅商的著名戰役是？", options: ["牧野之戰", "巨鹿之戰", "赤壁之戰", "官渡之戰"], answer: "牧野之戰", explanation: "周武王在牧野大敗商紂王軍隊，建立周朝。" },
-    { question: "春秋五霸中第一位霸主是誰？", options: ["齊桓公", "晉文公", "楚莊王", "吳王闔閭"], answer: "齊桓公", explanation: "齊桓公尊王攘夷，九合諸侯，被尊為春秋第一霸主。" },
-    { question: "戰國七雄不包括哪一國？", options: ["秦", "楚", "齊", "越"], answer: "越", explanation: "戰國七雄為秦、楚、齊、燕、趙、魏、韓。" },
-    { question: "商鞅變法發生在哪個諸侯國？", options: ["秦國", "魏國", "楚國", "齊國"], answer: "秦國", explanation: "商鞅在秦孝公支持下變法，使秦國強盛，為後來統一奠基。" },
-    { question: "焚書坑儒發生在哪位皇帝時期？", options: ["秦始皇", "漢武帝", "唐太宗", "宋太祖"], answer: "秦始皇", explanation: "秦始皇為加強思想控制，焚燒六國史書並坑殺儒生。" },
-    { question: "漢武帝實行的思想政策是？", options: ["獨尊儒術", "罷黜百家", "崇尚道教", "兼用佛法"], answer: "獨尊儒術", explanation: "董仲舒建議「罷黜百家，獨尊儒術」，儒家成為官方思想。" },
-    { question: "王莽篡漢建立的新朝在哪一年滅亡？", options: ["公元8年", "公元23年", "公元220年", "公元280年"], answer: "公元23年", explanation: "綠林、赤眉起義推翻新朝，王莽被殺。" },
-    { question: "光武中興的皇帝是誰？", options: ["劉秀", "劉徹", "劉邦", "劉禪"], answer: "劉秀", explanation: "劉秀建立東漢，史稱光武中興。" },
-    { question: "赤壁之戰的勝利方是誰？", options: ["曹操", "孫劉聯軍", "劉備單獨", "袁紹"], answer: "孫劉聯軍", explanation: "孫權劉備聯軍火燒曹軍船隻，奠定三國鼎立局面。" },
-    { question: "三國時期蜀漢的丞相是誰？", options: ["周瑜", "諸葛亮", "司馬懿", "陸遜"], answer: "諸葛亮", explanation: "諸葛亮輔佐劉備父子，鞠躬盡瘁。" },
-    { question: "司馬炎建立的朝代是？", options: ["魏", "晉", "宋", "隋"], answer: "晉", explanation: "司馬炎篡魏建立西晉，統一三國。" },
-    { question: "淝水之戰的前秦皇帝是誰？", options: ["苻堅", "慕容垂", "石勒", "拓跋珪"], answer: "苻堅", explanation: "苻堅大敗於謝安謝玄領導的東晉軍隊，前秦崩潰。" },
-    { question: "南北朝時期北魏孝文帝推行的漢化政策包括？", options: ["遷都洛陽", "改漢姓", "穿漢服", "以上皆是"], answer: "以上皆是", explanation: "孝文帝改革促進民族融合。" },
-    { question: "隋朝開鑿的大運河連接了哪兩大水系？", options: ["黃河與長江", "淮河與珠江", "遼河與海河", "湘江與赣江"], answer: "黃河與長江", explanation: "大運河加強南北經濟聯繫。" },
-    { question: "唐太宗的年號是？", options: ["貞觀", "開元", "永徽", "天寶"], answer: "貞觀", explanation: "貞觀之治是唐朝盛世的開端。" },
-    { question: "玄武門之變的主角是誰？", options: ["李淵", "李世民", "李建成", "李元吉"], answer: "李世民", explanation: "李世民發動政變殺兄逼父，登上皇位。" },
-    { question: "開元盛世的主人是？", options: ["唐太宗", "唐玄宗", "唐高宗", "武則天"], answer: "唐玄宗", explanation: "開元時期唐朝達到鼎盛。" },
-    { question: "黃巢起義的口號是？", options: ["王侯將相寧有種乎", "均貧富", "衝天香陣透長安", "蒼天已死黃天當立"], answer: "衝天香陣透長安", explanation: "黃巢起義動搖唐朝統治。" },
-    { question: "五代十國結束於哪位皇帝？", options: ["趙匡胤", "柴榮", "李昪", "劉知遠"], answer: "趙匡胤", explanation: "趙匡胤陳橋兵變建立宋朝，結束分裂。" },
-    { question: "王安石變法的主要目的是？", options: ["富國強兵", "加強中央集權", "抑制土地兼併", "推廣科舉"], answer: "富國強兵", explanation: "新法旨在解決財政軍事問題。" },
-    { question: "岳飛被害的罪名是？", options: ["莫須有", "通敵賣國", "貪污腐敗", "謀反篡位"], answer: "莫須有", explanation: "秦檜以「莫須有」罪名殺害岳飛。" },
-    { question: "成吉思汗的原名是？", options: ["鐵木真", "忽必烈", "窩闊台", "拔都"], answer: "鐵木真", explanation: "鐵木真統一蒙古後被尊為成吉思汗。" },
-    { question: "元朝的首都大都位於今天的哪裡？", options: ["北京", "南京", "西安", "洛陽"], answer: "北京", explanation: "元大都即今北京。" },
-    { question: "明太祖朱元璋建立明朝的年號是？", options: ["洪武", "永樂", "嘉靖", "萬曆"], answer: "洪武", explanation: "洪武年間朱元璋加強皇權。" },
-    { question: "土木堡之變的明英宗被誰俘虜？", options: ["瓦剌", "蒙古", "女真", "倭寇"], answer: "瓦剌", explanation: "也先率瓦剌俘明英宗，史稱土木之變。" },
-    { question: "戚繼光抗擊的是哪裡的外敵？", options: ["倭寇", "蒙古", "女真", "葡萄牙"], answer: "倭寇", explanation: "戚繼光在東南沿海抗倭。" },
-    { question: "康熙帝平定三藩之亂的三藩不包括？", options: ["吳三桂", "耿精忠", "尚可喜", "鄭成功"], answer: "鄭成功", explanation: "三藩為吳、耿、尚。" },
-    { question: "文字獄最嚴重的朝代是？", options: ["明朝", "清朝", "唐朝", "宋朝"], answer: "清朝", explanation: "清朝為加強思想控制，大興文字獄。" },
-    { question: "《永樂大典》編纂於哪位皇帝時期？", options: ["朱元璋", "朱棣", "朱厚照", "朱由檢"], answer: "朱棣", explanation: "永樂帝命人編纂中國古代最大類書。" },
-    { question: "「康乾盛世」持續約多少年？", options: ["100多年", "150多年", "200多年", "250多年"], answer: "150多年", explanation: "從康熙中期到乾隆末期，約150年。" },
-    { question: "林則徐虎門銷煙發生在哪一年？", options: ["1839年", "1840年", "1842年", "1856年"], answer: "1839年", explanation: "虎門銷煙引發鴉片戰爭。" }
+                    { question: "孔子是哪一家思想的創始人？", options: ["道家", "儒家", "墨家", "法家"], answer: "儒家", explanation: "孔子創立儒家，教導仁愛和禮儀。" },
+                    { question: "《論語》記錄的是誰的言行？", options: ["老子", "孔子", "孟子", "韓非"], answer: "孔子", explanation: "這是孔子的學生及其再傳弟子記錄孔子言論的經典。" },
+                    { question: "老子寫的著名書叫什麼？", options: ["《論語》", "《道德經》", "《孫子兵法》", "《詩經》"], answer: "《道德經》", explanation: "老子是道家創始人，《道德經》核心思想是「道法自然」。" },
+                    { question: "秦始皇叫什麼名字？", options: ["嬴政", "劉邦", "項羽", "李世民"], answer: "嬴政", explanation: "秦始皇嬴政統一了六國，建立了中國第一個大一統王朝。" },
+                    { question: "秦朝統一後使用的貨幣叫什麼？", options: ["交子", "秦半兩", "五銖錢", "銀錠"], answer: "秦半兩", explanation: "秦始皇統一貨幣，規定全國通用圓形方孔的「半兩」錢。" },
+                    { question: "秦朝修築來抵禦北方民族的建築是？", options: ["故宮", "長城", "天壇", "頤和園"], answer: "長城", explanation: "長城主要為了防禦北方的匈奴侵擾。" },
+                    { question: "西漢的開國皇帝是誰？", options: ["漢武帝", "漢高祖劉邦", "漢明帝", "漢光武帝"], answer: "漢高祖劉邦", explanation: "劉邦在楚漢戰爭中勝出，建立漢朝。" },
+                    { question: "絲綢之路是誰開闢的（出使西域）？", options: ["張騫", "班超", "衛青", "霍去病"], answer: "張騫", explanation: "張騫出使西域，促進了東西方的經濟與文化交流。" },
+                    { question: "三國時期，「桃園三結義」是指哪三個人？", options: ["曹操、劉備、孫權", "劉備、關羽、張飛", "諸葛亮、周瑜、司馬懿", "趙雲、馬超、黃忠"], answer: "劉備、關羽、張飛", explanation: "這是《三國演義》中家喻曉的故事，象徵忠義。" },
+                    { question: "唐朝最著名的女皇帝是誰？", options: ["慈禧", "武則天", "王昭君", "楊貴妃"], answer: "武則天", explanation: "武則天是中國歷史上唯一得到普遍承認的女皇帝。" },
+                    { question: "「唐詩三百首」中被稱為「詩仙」的是？", options: ["杜甫", "白居易", "李白", "王維"], answer: "李白", explanation: "李白詩風豪放，想像豐富，被後人譽為「詩仙」。" },
+                    { question: "北宋發明的、用於導航的工具是？", options: ["火藥", "指南針", "造紙術", "印刷術"], answer: "指南針", explanation: "指南針在宋代開始大量應用於航海。" },
+                    { question: "成吉思汗是哪個民族的首領？", options: ["藏族", "蒙古族", "滿族", "回族"], answer: "蒙古族", explanation: "成吉思汗統一蒙古各部，建立大蒙古國。" },
+                    { question: "明朝修築的著名宮殿群叫什麼？", options: ["白宮", "故宮（紫禁城）", "凡爾賽宮", "布達拉宮"], answer: "故宮（紫禁城）", explanation: "北京故宮是明清兩代的皇宮。" },
+                    { question: "鄭和下西洋最遠到達了哪裡？", options: ["非洲東海岸和紅海沿岸", "歐洲", "美洲", "澳洲"], answer: "非洲東海岸和紅海沿岸", explanation: "鄭和七下西洋，加強了中國與亞非各國的聯繫。" },
+                    { question: "清朝最後一個皇帝是誰？", options: ["康熙", "乾隆", "溥儀", "光緒"], answer: "溥儀", explanation: "溥儀是清朝及中國封建王朝的最後一位皇帝。" },
+                    { question: "中國四大發明不Map包括哪一項？", options: ["造紙術", "火藥", "印刷術", "電燈"], answer: "電燈", explanation: "四大發明是造紙術、指南針、火藥和印刷術。" },
+                    { question: "戰國時期主張「兼愛、非攻」的思想家是？", options: ["墨子", "莊子", "荀子", "韓非子"], answer: "墨子", explanation: "墨子創立墨家，反對不義戰爭。" },
+                    { question: "「草船借箭」的故事與誰有關？", options: ["劉備", "諸葛亮", "孫權", "關羽"], answer: "諸葛亮", explanation: "諸葛亮利用大霧天氣，向曹操「借」了十萬餘支箭。" },
+                    { question: "《三國演義》中，「空城計」的主角是？", options: ["司馬懿", "曹操", "諸葛亮", "周瑜"], answer: "諸葛亮", explanation: "諸葛亮在西城大開城門，嚇退司馬懿大軍。" },
+                    { question: "唐代稱為「詩聖」的詩人是？", options: ["李白", "杜甫", "杜牧", "李商隱"], answer: "杜甫", explanation: "杜甫的詩反映社會現實，被稱為「詩史」。" },
+                    { question: "宋代哪位將領曾立志「精忠報國」？", options: ["岳飛", "文天祥", "陸秀夫", "戚繼光"], answer: "岳飛", explanation: "岳飛是南宋著名的抗金將領。" },
+                    { question: "元朝是由哪個民族建立的？", options: ["漢族", "蒙古族", "契丹族", "女真族"], answer: "蒙古族", explanation: "忽必烈建立元朝，是第一個由少數民族建立的大一統王朝。" },
+                    { question: "明朝寫《本草綱目》的醫學家是？", options: ["華佗", "扁鵲", "李時珍", "孫思邈"], answer: "李時珍", explanation: "《本草綱目》被譽為「東方藥學巨典」。" },
+                    { question: "清朝在哪場戰爭後簽訂了《南京條約》？", options: ["甲午戰爭", "鴉片戰爭", "中法戰爭", "八國聯軍侵華"], answer: "鴉片戰爭", explanation: "1842年簽訂的《南京條約》是中國近代史上第一個不平等條約。" },
+                    { question: "中秋節傳統上會吃什麼食物？", options: ["粽子", "月餅", "餃子", "湯圓"], answer: "月餅", explanation: "中秋節合家團圓，吃月餅象徵圓滿。" },
+                    { question: "端午節是為了紀念哪位歷史人物？", options: ["屈原", "伍子胥", "曹操", "劉邦"], answer: "屈原", explanation: "端午節賽龍舟、吃粽子是為了紀念戰國時期的楚國詩人屈原。" },
+                    { question: "中國傳統建築中，屋頂上的小獸主要作用是？", options: ["純裝飾", "通風", "裝飾與祈求平安", "照明"], answer: "裝飾與祈求平安", explanation: "宮殿屋脊上的「脊獸」有嚴格等級劃分，也有防火避災的寓意。" },
+                    { question: "文房四寶是指筆、墨、紙和什麼？", options: ["書", "硯", "琴", "畫"], answer: "硯", explanation: "筆、墨、紙、硯是中國傳統書寫繪畫的工具。" },
+                    { question: "「學而時習之，不亦說乎」出自哪本書？", options: ["《論語》", "《大學》", "《中庸》", "《孟子》"], answer: "《論語》", explanation: "這是《論語》開篇的第一句話，強調學習的快樂。" },
+                    { question: "被尊稱為「書聖」的晉代書法家是誰？", options: ["顏真卿", "柳公權", "王羲之", "蘇軾"], answer: "王羲之", explanation: "王羲之的代表作《蘭亭集序》被譽為「天下第一行書」。" },
+                    { question: "「破釜沉舟」這個成語與哪位歷史人物有關？", options: ["韓信", "項羽", "劉邦", "岳飛"], answer: "項羽", explanation: "巨鹿之戰中，項羽命令軍隊打破煮飯的鍋，鑿沉渡河的船，以示決死一戰。" },
+                    { question: "中國歷史上唯一一個由少數民族建立，且首都在北京的朝代是？", options: ["遼朝", "金朝", "元朝", "清朝"], answer: "元朝", explanation: "元朝定都大都（今北京），由蒙古族建立。" },
+                    { question: "北宋時期著名的變法運動是誰主導的？", options: ["商鞅", "王安石", "張居正", "康有為"], answer: "王安石", explanation: "王安石變法旨在富國強兵，但最終因保守派反對而失敗。" },
+                    { question: "明代鄭和下西洋的船隊出發港口主要在哪個省份？", options: ["廣東", "福建", "江蘇", "浙江"], answer: "江蘇", explanation: "鄭和船隊主要從江蘇太倉的劉家港出發。" },
+                    { question: "清代被譽為中國古典小說巔峰之作的是？", options: ["《西遊記》", "《水滸傳》", "《三國演義》", "《紅樓夢》"], answer: "《紅樓夢》", explanation: "曹雪芹的《紅樓夢》深刻描繪了封建社會的衰亡。" },
+                    { question: "「靖康之恥」導致了哪個朝代的滅亡？", options: ["西晉", "唐朝", "北宋", "明朝"], answer: "北宋", explanation: "金軍攻破汴京，俘虜宋徽宗、宋欽宗，北宋滅亡。" },
+                    { question: "中國古代科舉制度是在哪個朝代正式確立的？", options: ["漢朝", "隋朝", "唐朝", "宋朝"], answer: "隋朝", explanation: "隋煬帝設立進士科，標誌著科舉制度的正式誕生。" },
+                    { question: "「四面楚歌」的故事發生在哪場戰役中？", options: ["赤壁之戰", "官渡之戰", "垓下之戰", "淝水之戰"], answer: "垓下之戰", explanation: "劉邦軍隊在垓下包圍項羽，並唱起楚地民歌，瓦解楚軍鬥志。" },
+                    // 以下為新增的 10 道題
+                    { question: "中國古代科舉制度中，殿試的第一名叫狀元，第二名叫什麼？", options: ["探花", "榜眼", "進士", "會元"], answer: "榜眼", explanation: "殿試前三甲依序為：狀元、榜眼、探花。" },
+                    { question: "「三顧茅廬」的故事中，劉備去請誰出山？", options: ["關羽", "張飛", "諸葛亮", "趙雲"], answer: "諸葛亮", explanation: "劉備三次到隆中拜訪諸葛亮，請他出山輔佐。" },
+                    { question: "中國四大名著中，講述唐僧師徒四人西天取經的是哪一部？", options: ["《三國演義》", "《水滸傳》", "《紅樓夢》", "《西遊記》"], answer: "《西遊記》", explanation: "《西遊記》以唐代高僧玄奘赴印度取經的歷史事件為藍本改編。" },
+                    { question: "「負荊請罪」的故事發生在戰國時期的哪個國家？", options: ["秦國", "趙國", "齊國", "楚國"], answer: "趙國", explanation: "趙國老將廉頗向藺相如背著荊條請罪，成就了「將相和」的美談。" },
+                    { question: "宋代著名的發明，將活字印刷術發揚光大的人是誰？", options: ["蔡倫", "畢昇", "沈括", "張衡"], answer: "畢昇", explanation: "北宋平民畢昇發明了膠泥活字印刷術，極大促進了文化傳播。" },
+                    { question: "被稱為「詩鬼」的唐代詩人是誰？", options: ["李賀", "李白", "杜甫", "白居易"], answer: "李賀", explanation: "李賀的詩作想像奇特，充滿神話色彩與冷豔淒厲的風格，故稱「詩鬼」。" },
+                    { question: "中國古代神話中，開天闢地的人物是？", options: ["女媧", "伏羲", "盤古", "神農"], answer: "盤古", explanation: "傳說盤古劈開混沌，清氣上升為天，濁氣下降為地。" },
+                    { question: "戰國七雄中，最後統一天下的是哪個國家？", options: ["齊國", "楚國", "燕國", "秦國"], answer: "秦國", explanation: "秦王嬴政先後滅掉韓、趙、魏、楚、燕、齊六國，完成統一大業。" },
+                    { question: "著名的「赤壁之戰」發生在哪個歷史時期？", options: ["春秋戰國", "東漢末年", "南北朝", "五代十國"], answer: "東漢末年", explanation: "西元208年，孫劉聯軍在赤壁大破曹軍，奠定三國鼎立的基礎。" },
+                    { question: "清朝鼎盛時期被稱為「康乾盛世」，其中包含了哪三位皇帝？", options: ["康熙、雍正、乾隆", "順治、康熙、雍正", "康熙、乾隆、嘉慶", "雍正、乾隆、嘉慶"], answer: "康熙、雍正、乾隆", explanation: "經歷這三代皇帝的治理，清朝國力達到鼎盛時期。" }
                 ];
 
                 const initializeQuiz = () => {
-                    let selected = shuffleArray(allQuestions).slice(0, 30);
+                    // 這裡修改為 slice(0, 40)，這樣系統就會隨機抽出 40 題，分母自然會變成 40
+                    let selected = shuffleArray(allQuestions).slice(0, 40);
                     return selected.map(q => {
                         return { ...q, options: shuffleArray(q.options) };
                     });
@@ -282,19 +254,17 @@
                 const isFinished = ref(false);
 
                 const currentQuestion = computed(() => questions.value[currentIndex.value]);
-                // 進度條現在會根據題數平滑前進
                 const progress = computed(() => (currentIndex.value / questions.value.length) * 100);
                 const isLastQuestion = computed(() => currentIndex.value === questions.value.length - 1);
 
-                // 更新為科舉等級稱謂
                 const badge = computed(() => {
                     const rate = correctCount.value / questions.value.length;
                     if (rate === 1) return { icon: '🐉', title: '狀元', desc: '才高八斗，殿試第一，無人能出其右！' };
                     if (rate >= 0.9) return { icon: '🌸', title: '榜眼', desc: '學富五車，才華橫溢，金榜題名。' };
                     if (rate >= 0.8) return { icon: '🌺', title: '探花', desc: '文采斐然，御筆欽點，春風得意。' };
-                    if (rate >= 0.7) return { icon: '📜', title: '進士', desc: '十年寒窗無人問，一舉成名天下知。' };
-                    if (rate >= 0.6) return { icon: '🏮', title: '舉人', desc: '秋闈及第，已具備入仕做官的資格。' };
-                    if (rate >= 0.5) return { icon: '🖋️', title: '秀才', desc: '初入縣學，尚需懸梁刺股，繼續努力。' };
+                    if (rate >= 0.6) return { icon: '📜', title: '進士', desc: '十年寒窗無人問，一舉成名天下知。' };
+                    if (rate >= 0.4) return { icon: '🏮', title: '舉人', desc: '秋闈及第，已具備入仕做官的資格。' };
+                    if (rate >= 0.2) return { icon: '🖋️', title: '秀才', desc: '初入縣學，尚需懸梁刺股，繼續努力。' };
                     return { icon: '🌱', title: '童生', desc: '初具慧根，讀書破萬卷方能如神。' };
                 });
 
